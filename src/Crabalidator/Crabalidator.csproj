@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Crabalidator</PackageId>
+    <Description>Crabalidator is a high-performance .NET validation library powered by DynaBee-generated runtime validators.</Description>
+    <PackageTags>validation validator fluent-validation code-generator dynabee crabalidator elysium</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DynaBee" Version="1.2.6" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.5" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+    <PackageReference Include="MinVer" Version="6.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Abstractions\" />
+    <Folder Include="Configuration\" />
+    <Folder Include="DependencyInjection\" />
+    <Folder Include="Diagnostics\" />
+    <Folder Include="Generation\Dynabee\" />
+    <Folder Include="Planning\" />
+    <Folder Include="Runtime\" />
+  </ItemGroup>
+</Project>
