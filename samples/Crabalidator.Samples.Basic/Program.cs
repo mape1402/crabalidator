@@ -1,12 +1,19 @@
 using Crabalidator;
+using Crabalidator.DependencyInjection;
 using Crabalidator.Diagnostics;
 using Crabalidator.Samples.Basic;
+using Microsoft.Extensions.DependencyInjection;
 
-var validator = new CustomerValidator();
+var services = new ServiceCollection();
+services.AddCrabalidator(typeof(CustomerValidator).Assembly);
+
+var provider = services.BuildServiceProvider();
+var crabalidator = provider.GetRequiredService<ICrabalidator>();
+var configuredValidator = provider.GetRequiredService<CrabValidator<Customer>>();
 
 Console.WriteLine("Crabalidator basic sample");
 Console.WriteLine();
-Console.WriteLine(validator.Descriptor.DescribeConfiguration());
+Console.WriteLine(configuredValidator.Descriptor.DescribeConfiguration());
 
 var validCustomer = new Customer
 {
@@ -24,10 +31,10 @@ var invalidCustomer = new Customer
     Address = new Address { PostalCode = "12" }
 };
 
-SampleResultPrinter.Print("Valid customer", validator.Validate(validCustomer));
-SampleResultPrinter.Print("Invalid customer", validator.Validate(invalidCustomer));
+SampleResultPrinter.Print("Valid customer", crabalidator.Validate(validCustomer));
+SampleResultPrinter.Print("Invalid customer", crabalidator.Validate(invalidCustomer));
 
 Console.WriteLine();
-Console.WriteLine($"Planned properties: {validator.Plan.Properties.Count}");
-Console.WriteLine($"Requires async: {validator.Plan.RequiresAsync}");
-Console.WriteLine($"Requires context: {validator.Plan.RequiresContext}");
+Console.WriteLine($"Planned properties: {configuredValidator.Plan.Properties.Count}");
+Console.WriteLine($"Requires async: {configuredValidator.Plan.RequiresAsync}");
+Console.WriteLine($"Requires context: {configuredValidator.Plan.RequiresContext}");

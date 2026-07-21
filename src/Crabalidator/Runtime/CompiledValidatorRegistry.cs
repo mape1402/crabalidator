@@ -36,7 +36,7 @@ namespace Crabalidator.Runtime
             }
 
             return _validators.GetOrAdd(
-                typeof(T),
+                validator.GetType(),
                 _ => new Lazy<CompiledValidator>(() => Compile(validator.Descriptor))).Value;
         }
 

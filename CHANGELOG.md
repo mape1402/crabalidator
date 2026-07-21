@@ -9,3 +9,4 @@ All notable changes to Crabalidator will be documented in this file.
 - Added backend-neutral validation planning with rule order, failure metadata, diagnostics, and interpreted plan execution.
 - Added the first DynaBee sync generation backend with compiled validator invokers and registry caching.
 - Added a basic console sample project.
+- Added dependency injection registration, validator discovery, compiled validator adapters, and the default Crabalidator service.
