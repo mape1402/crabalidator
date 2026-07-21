@@ -57,7 +57,7 @@ namespace Crabalidator.Configuration
                 throw new ArgumentNullException(nameof(predicate));
             }
 
-            return Add(RuleDescriptor.Must(_propertyRule.PropertyName, value => predicate((TProperty)value)));
+            return Add(RuleDescriptor.Must(_propertyRule.PropertyName, value => predicate((TProperty)value), predicate));
         }
 
         public ICrabRuleBuilder<T, TProperty> MustAsync(Func<TProperty, CancellationToken, ValueTask<bool>> predicate)
@@ -88,7 +88,7 @@ namespace Crabalidator.Configuration
                 throw new ArgumentNullException(nameof(condition));
             }
 
-            _propertyRule.SetCondition(instance => condition((T)instance));
+            _propertyRule.SetCondition(instance => condition((T)instance), condition, false);
             return this;
         }
 
@@ -99,7 +99,7 @@ namespace Crabalidator.Configuration
                 throw new ArgumentNullException(nameof(condition));
             }
 
-            _propertyRule.SetCondition(instance => !condition((T)instance));
+            _propertyRule.SetCondition(instance => !condition((T)instance), condition, true);
             return this;
         }
 

@@ -20,6 +20,12 @@ namespace Crabalidator.Generation.Dynabee
             => plan.Properties[propertyIndex].GetValue(instance);
 
         /// <summary>
+        /// Gets a nested validation plan for emitted recursive validation.
+        /// </summary>
+        public static ValidationPlan GetNestedPlan(ValidationPlan plan, int propertyIndex)
+            => plan.Properties[propertyIndex].NestedValidation.Plan;
+
+        /// <summary>
         /// Executes a planned rule when the IL backend cannot inline it directly.
         /// </summary>
         public static bool IsRuleInvalid(ValidationPlan plan, int propertyIndex, int ruleIndex, object value)

@@ -10,6 +10,7 @@ namespace Crabalidator.Configuration
         private readonly List<RuleDescriptor> _rules = new List<RuleDescriptor>();
         private readonly Func<object, object> _accessor;
         private Func<object, bool> _condition;
+        private Delegate _typedCondition;
 
         internal PropertyRuleDescriptor(
             string propertyName,
@@ -55,6 +56,10 @@ namespace Crabalidator.Configuration
 
         internal bool HasCondition => _condition != null;
 
+        internal Delegate TypedCondition => _typedCondition;
+
+        internal bool IsConditionNegated { get; private set; }
+
         internal static PropertyRuleDescriptor Create<T, TProperty>(Expression<Func<T, TProperty>> expression)
         {
             var path = PropertyPathResolver.Resolve(expression);
@@ -81,7 +86,14 @@ namespace Crabalidator.Configuration
             => CascadeMode = cascadeMode;
 
         internal void SetCondition(Func<object, bool> condition)
-            => _condition = condition ?? throw new ArgumentNullException(nameof(condition));
+            => SetCondition(condition, null, false);
+
+        internal void SetCondition(Func<object, bool> condition, Delegate typedCondition, bool isNegated)
+        {
+            _condition = condition ?? throw new ArgumentNullException(nameof(condition));
+            _typedCondition = typedCondition;
+            IsConditionNegated = isNegated;
+        }
 
         internal void SetNestedValidator(NestedValidatorDescriptor nestedValidator)
             => NestedValidator = nestedValidator ?? throw new ArgumentNullException(nameof(nestedValidator));

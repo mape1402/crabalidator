@@ -56,6 +56,7 @@ namespace Crabalidator.Planning
                             rule.Severity),
                         rule.IsAsync,
                         false,
+                        rule.Predicate,
                         rule.IsValid,
                         rule.IsValidAsync));
                 }
@@ -67,6 +68,8 @@ namespace Crabalidator.Planning
                     propertyRule.PropertyType,
                     propertyRule.CascadeMode,
                     propertyRule.HasCondition,
+                    propertyRule.TypedCondition,
+                    propertyRule.IsConditionNegated,
                     rules,
                     CreateNestedValidationPlan(propertyRule),
                     propertyRule.GetValue,

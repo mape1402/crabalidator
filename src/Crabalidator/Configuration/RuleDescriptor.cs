@@ -15,6 +15,7 @@ namespace Crabalidator.Configuration
             string errorMessage,
             Func<object, bool> isValid,
             Func<object, CancellationToken, ValueTask<bool>> isValidAsync = null,
+            Delegate predicate = null,
             object comparisonValue = null,
             int? minimum = null,
             int? maximum = null)
@@ -23,6 +24,7 @@ namespace Crabalidator.Configuration
             ErrorMessage = errorMessage ?? throw new ArgumentNullException(nameof(errorMessage));
             _isValid = isValid;
             _isValidAsync = isValidAsync;
+            Predicate = predicate;
             IsAsync = isValidAsync != null;
             ComparisonValue = comparisonValue;
             Minimum = minimum;
@@ -69,6 +71,8 @@ namespace Crabalidator.Configuration
         /// Gets a value indicating whether this rule requires async execution.
         /// </summary>
         public bool IsAsync { get; }
+
+        internal Delegate Predicate { get; }
 
         internal static RuleDescriptor NotNull(string propertyName)
             => new RuleDescriptor(
@@ -139,7 +143,7 @@ namespace Crabalidator.Configuration
                 maximum: maximum);
         }
 
-        internal static RuleDescriptor Must(string propertyName, Func<object, bool> predicate)
+        internal static RuleDescriptor Must(string propertyName, Func<object, bool> predicate, Delegate typedPredicate = null)
         {
             if (predicate == null)
             {
@@ -149,7 +153,8 @@ namespace Crabalidator.Configuration
             return new RuleDescriptor(
                 RuleKind.Must,
                 $"'{propertyName}' is not valid.",
-                value => predicate(value));
+                value => predicate(value),
+                predicate: typedPredicate);
         }
 
         internal static RuleDescriptor MustAsync(

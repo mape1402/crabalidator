@@ -21,6 +21,7 @@ namespace Crabalidator.Planning
         /// <param name="failure">The failure plan.</param>
         /// <param name="isAsync">A value indicating whether the rule is async-only.</param>
         /// <param name="requiresContext">A value indicating whether the rule needs validation context.</param>
+        /// <param name="predicate">The original typed predicate delegate, when available.</param>
         /// <param name="isValid">The configured predicate.</param>
         /// <param name="isValidAsync">The configured async predicate.</param>
         internal RulePlan(
@@ -32,6 +33,7 @@ namespace Crabalidator.Planning
             FailurePlan failure,
             bool isAsync,
             bool requiresContext,
+            Delegate predicate,
             Func<object, bool> isValid,
             Func<object, CancellationToken, ValueTask<bool>> isValidAsync)
         {
@@ -43,6 +45,7 @@ namespace Crabalidator.Planning
             Failure = failure ?? throw new ArgumentNullException(nameof(failure));
             IsAsync = isAsync;
             RequiresContext = requiresContext;
+            Predicate = predicate;
             _isValid = isValid;
             _isValidAsync = isValidAsync;
         }
@@ -86,6 +89,8 @@ namespace Crabalidator.Planning
         /// Gets a value indicating whether the rule requires validation context.
         /// </summary>
         public bool RequiresContext { get; }
+
+        internal Delegate Predicate { get; }
 
         internal bool IsValid(object value)
         {

@@ -17,6 +17,8 @@ namespace Crabalidator.Planning
         /// <param name="propertyType">The property type.</param>
         /// <param name="cascadeMode">The cascade mode.</param>
         /// <param name="hasCondition">A value indicating whether the property has a configured condition.</param>
+        /// <param name="typedCondition">The original typed condition delegate, when available.</param>
+        /// <param name="isConditionNegated">A value indicating whether the typed condition should be negated.</param>
         /// <param name="rules">The rule plans.</param>
         /// <param name="nestedValidation">The nested validation plan.</param>
         /// <param name="getValue">The configured value accessor.</param>
@@ -28,6 +30,8 @@ namespace Crabalidator.Planning
             Type propertyType,
             CascadeMode cascadeMode,
             bool hasCondition,
+            Delegate typedCondition,
+            bool isConditionNegated,
             IReadOnlyList<RulePlan> rules,
             NestedValidationPlan nestedValidation,
             Func<object, object> getValue,
@@ -39,6 +43,8 @@ namespace Crabalidator.Planning
             PropertyType = propertyType ?? throw new ArgumentNullException(nameof(propertyType));
             CascadeMode = cascadeMode;
             HasCondition = hasCondition;
+            TypedCondition = typedCondition;
+            IsConditionNegated = isConditionNegated;
             Rules = rules ?? throw new ArgumentNullException(nameof(rules));
             NestedValidation = nestedValidation;
             _getValue = getValue ?? throw new ArgumentNullException(nameof(getValue));
@@ -74,6 +80,10 @@ namespace Crabalidator.Planning
         /// Gets a value indicating whether the property has a configured condition.
         /// </summary>
         public bool HasCondition { get; }
+
+        internal Delegate TypedCondition { get; }
+
+        internal bool IsConditionNegated { get; }
 
         /// <summary>
         /// Gets the planned rules.
