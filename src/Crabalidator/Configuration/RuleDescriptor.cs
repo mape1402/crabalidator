@@ -8,18 +8,22 @@ namespace Crabalidator.Configuration
     public sealed class RuleDescriptor
     {
         private readonly Func<object, bool> _isValid;
+        private readonly Func<object, CancellationToken, ValueTask<bool>> _isValidAsync;
 
         private RuleDescriptor(
             RuleKind kind,
             string errorMessage,
             Func<object, bool> isValid,
+            Func<object, CancellationToken, ValueTask<bool>> isValidAsync = null,
             object comparisonValue = null,
             int? minimum = null,
             int? maximum = null)
         {
             Kind = kind;
             ErrorMessage = errorMessage ?? throw new ArgumentNullException(nameof(errorMessage));
-            _isValid = isValid ?? throw new ArgumentNullException(nameof(isValid));
+            _isValid = isValid;
+            _isValidAsync = isValidAsync;
+            IsAsync = isValidAsync != null;
             ComparisonValue = comparisonValue;
             Minimum = minimum;
             Maximum = maximum;
@@ -61,6 +65,11 @@ namespace Crabalidator.Configuration
         /// </summary>
         public int? Maximum { get; }
 
+        /// <summary>
+        /// Gets a value indicating whether this rule requires async execution.
+        /// </summary>
+        public bool IsAsync { get; }
+
         internal static RuleDescriptor NotNull(string propertyName)
             => new RuleDescriptor(
                 RuleKind.NotNull,
@@ -78,14 +87,14 @@ namespace Crabalidator.Configuration
                 RuleKind.Equal,
                 $"'{propertyName}' must be equal to '{expected}'.",
                 value => object.Equals(value, expected),
-                expected);
+                comparisonValue: expected);
 
         internal static RuleDescriptor NotEqual(string propertyName, object expected)
             => new RuleDescriptor(
                 RuleKind.NotEqual,
                 $"'{propertyName}' must not be equal to '{expected}'.",
                 value => !object.Equals(value, expected),
-                expected);
+                comparisonValue: expected);
 
         internal static RuleDescriptor Comparison(string propertyName, RuleKind kind, object expected)
         {
@@ -93,7 +102,7 @@ namespace Crabalidator.Configuration
                 kind,
                 CreateComparisonMessage(propertyName, kind, expected),
                 value => Compare(value, expected, kind),
-                expected);
+                comparisonValue: expected);
         }
 
         internal static RuleDescriptor Length(string propertyName, int minimum, int maximum)
@@ -143,6 +152,22 @@ namespace Crabalidator.Configuration
                 value => predicate(value));
         }
 
+        internal static RuleDescriptor MustAsync(
+            string propertyName,
+            Func<object, CancellationToken, ValueTask<bool>> predicate)
+        {
+            if (predicate == null)
+            {
+                throw new ArgumentNullException(nameof(predicate));
+            }
+
+            return new RuleDescriptor(
+                RuleKind.MustAsync,
+                $"'{propertyName}' is not valid.",
+                null,
+                predicate);
+        }
+
         internal RuleDescriptor WithMessage(string message)
         {
             ErrorMessage = string.IsNullOrWhiteSpace(message)
@@ -166,7 +191,22 @@ namespace Crabalidator.Configuration
         }
 
         internal bool IsValid(object value)
-            => _isValid(value);
+        {
+            if (IsAsync)
+            {
+                throw new InvalidOperationException("Async validation rules cannot be executed by the synchronous validation path.");
+            }
+
+            return _isValid(value);
+        }
+
+        internal ValueTask<bool> IsValidAsync(object value, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return IsAsync
+                ? _isValidAsync(value, cancellationToken)
+                : new ValueTask<bool>(_isValid(value));
+        }
 
         private static bool IsEmpty(object value, Type propertyType)
         {

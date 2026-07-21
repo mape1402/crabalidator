@@ -22,7 +22,8 @@ namespace Crabalidator.Planning
             ModelType = modelType ?? throw new ArgumentNullException(nameof(modelType));
             Properties = properties ?? throw new ArgumentNullException(nameof(properties));
             Diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
-            RequiresAsync = Properties.SelectMany(x => x.Rules).Any(x => x.IsAsync);
+            RequiresAsync = Properties.SelectMany(x => x.Rules).Any(x => x.IsAsync)
+                || Properties.Any(x => x.NestedValidation?.IsAsync == true);
             RequiresContext = Properties.SelectMany(x => x.Rules).Any(x => x.RequiresContext);
         }
 
@@ -63,5 +64,14 @@ namespace Crabalidator.Planning
         /// <returns>The validation result.</returns>
         public ValidationResult Execute(object instance)
             => ValidationPlanExecutor.Execute(this, instance);
+
+        /// <summary>
+        /// Executes this plan asynchronously for an untyped model instance.
+        /// </summary>
+        /// <param name="instance">The model instance.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The validation result.</returns>
+        public ValueTask<ValidationResult> ExecuteAsync(object instance, CancellationToken cancellationToken = default)
+            => ValidationPlanExecutor.ExecuteAsync(this, instance, cancellationToken);
     }
 }

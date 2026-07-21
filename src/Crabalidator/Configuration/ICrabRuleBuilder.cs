@@ -68,6 +68,11 @@ namespace Crabalidator
         ICrabRuleBuilder<T, TProperty> Must(Func<TProperty, bool> predicate);
 
         /// <summary>
+        /// Requires the value to satisfy an async custom predicate.
+        /// </summary>
+        ICrabRuleBuilder<T, TProperty> MustAsync(Func<TProperty, CancellationToken, ValueTask<bool>> predicate);
+
+        /// <summary>
         /// Overrides the error message for the most recently added rule.
         /// </summary>
         ICrabRuleBuilder<T, TProperty> WithMessage(string message);

@@ -63,6 +63,11 @@ namespace Crabalidator.Configuration
         /// <summary>
         /// Custom predicate rule.
         /// </summary>
-        Must
+        Must,
+
+        /// <summary>
+        /// Async custom predicate rule.
+        /// </summary>
+        MustAsync
     }
 }

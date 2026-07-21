@@ -8,6 +8,7 @@ namespace Crabalidator.Planning
     public sealed class RulePlan
     {
         private readonly Func<object, bool> _isValid;
+        private readonly Func<object, CancellationToken, ValueTask<bool>> _isValidAsync;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RulePlan"/> class.
@@ -21,6 +22,7 @@ namespace Crabalidator.Planning
         /// <param name="isAsync">A value indicating whether the rule is async-only.</param>
         /// <param name="requiresContext">A value indicating whether the rule needs validation context.</param>
         /// <param name="isValid">The configured predicate.</param>
+        /// <param name="isValidAsync">The configured async predicate.</param>
         internal RulePlan(
             int order,
             RuleKind kind,
@@ -30,7 +32,8 @@ namespace Crabalidator.Planning
             FailurePlan failure,
             bool isAsync,
             bool requiresContext,
-            Func<object, bool> isValid)
+            Func<object, bool> isValid,
+            Func<object, CancellationToken, ValueTask<bool>> isValidAsync)
         {
             Order = order;
             Kind = kind;
@@ -40,7 +43,8 @@ namespace Crabalidator.Planning
             Failure = failure ?? throw new ArgumentNullException(nameof(failure));
             IsAsync = isAsync;
             RequiresContext = requiresContext;
-            _isValid = isValid ?? throw new ArgumentNullException(nameof(isValid));
+            _isValid = isValid;
+            _isValidAsync = isValidAsync;
         }
 
         /// <summary>
@@ -84,6 +88,21 @@ namespace Crabalidator.Planning
         public bool RequiresContext { get; }
 
         internal bool IsValid(object value)
-            => _isValid(value);
+        {
+            if (IsAsync)
+            {
+                throw new InvalidOperationException("Async validation rules cannot be executed by the synchronous validation path.");
+            }
+
+            return _isValid(value);
+        }
+
+        internal ValueTask<bool> IsValidAsync(object value, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return IsAsync
+                ? _isValidAsync(value, cancellationToken)
+                : new ValueTask<bool>(_isValid(value));
+        }
     }
 }

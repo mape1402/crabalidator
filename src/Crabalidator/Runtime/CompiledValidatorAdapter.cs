@@ -1,3 +1,5 @@
+using Crabalidator.Planning;
+
 namespace Crabalidator.Runtime
 {
     /// <summary>
@@ -29,6 +31,11 @@ namespace Crabalidator.Runtime
                 throw new ArgumentNullException(nameof(context));
             }
 
+            if (_validator.Plan.RequiresAsync)
+            {
+                throw new InvalidOperationException("This validator contains async rules and must be executed with ValidateAsync.");
+            }
+
             return _compiledValidator.Value.Validate(context.InstanceToValidate);
         }
 
@@ -37,7 +44,16 @@ namespace Crabalidator.Runtime
 
         public ValueTask<ValidationResult> ValidateAsync(ValidationContext<T> context, CancellationToken cancellationToken = default)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            if (_validator.Plan.RequiresAsync)
+            {
+                return ValidationPlanExecutor.ExecuteAsync(_validator.Plan, context, cancellationToken);
+            }
+
             return new ValueTask<ValidationResult>(Validate(context));
         }
     }

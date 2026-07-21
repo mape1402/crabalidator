@@ -54,8 +54,12 @@ namespace Crabalidator
         /// <inheritdoc/>
         public ValueTask<ValidationResult> ValidateAsync(ValidationContext<T> context, CancellationToken cancellationToken = default)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            return new ValueTask<ValidationResult>(Validate(context));
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            return ValidationPlanExecutor.ExecuteAsync(Plan, context, cancellationToken);
         }
 
         /// <summary>

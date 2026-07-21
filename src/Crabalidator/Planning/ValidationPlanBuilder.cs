@@ -54,9 +54,10 @@ namespace Crabalidator.Planning
                             rule.ErrorMessage,
                             rule.ErrorCode,
                             rule.Severity),
+                        rule.IsAsync,
                         false,
-                        false,
-                        rule.IsValid));
+                        rule.IsValid,
+                        rule.IsValidAsync));
                 }
 
                 properties.Add(new PropertyValidationPlan(
@@ -89,7 +90,9 @@ namespace Crabalidator.Planning
             return new NestedValidationPlan(
                 nested.ModelType,
                 nested.IsCollection,
-                nested.Validate);
+                nested.IsAsync,
+                nested.Validate,
+                nested.ValidateAsync);
         }
     }
 }

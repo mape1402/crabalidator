@@ -60,6 +60,18 @@ namespace Crabalidator.Configuration
             return Add(RuleDescriptor.Must(_propertyRule.PropertyName, value => predicate((TProperty)value)));
         }
 
+        public ICrabRuleBuilder<T, TProperty> MustAsync(Func<TProperty, CancellationToken, ValueTask<bool>> predicate)
+        {
+            if (predicate == null)
+            {
+                throw new ArgumentNullException(nameof(predicate));
+            }
+
+            return Add(RuleDescriptor.MustAsync(
+                _propertyRule.PropertyName,
+                (value, cancellationToken) => predicate((TProperty)value, cancellationToken)));
+        }
+
         public ICrabRuleBuilder<T, TProperty> WithMessage(string message)
             => ConfigureCurrent(rule => rule.WithMessage(message));
 
@@ -113,7 +125,11 @@ namespace Crabalidator.Configuration
             _propertyRule.SetNestedValidator(new NestedValidatorDescriptor(
                 typeof(TChild),
                 false,
-                value => value == null ? ValidationResult.Success : validator.Validate((TChild)value)));
+                validator.Plan.RequiresAsync,
+                value => value == null ? ValidationResult.Success : validator.Validate((TChild)value),
+                (value, cancellationToken) => value == null
+                    ? new ValueTask<ValidationResult>(ValidationResult.Success)
+                    : validator.ValidateAsync((TChild)value, cancellationToken)));
 
             return this;
         }
@@ -134,7 +150,11 @@ namespace Crabalidator.Configuration
             _propertyRule.SetNestedValidator(new NestedValidatorDescriptor(
                 typeof(TElement),
                 true,
-                value => value == null ? ValidationResult.Success : validator.Validate((TElement)value)));
+                validator.Plan.RequiresAsync,
+                value => value == null ? ValidationResult.Success : validator.Validate((TElement)value),
+                (value, cancellationToken) => value == null
+                    ? new ValueTask<ValidationResult>(ValidationResult.Success)
+                    : validator.ValidateAsync((TElement)value, cancellationToken)));
 
             return this;
         }
