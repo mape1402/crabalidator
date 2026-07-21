@@ -53,6 +53,8 @@ namespace Crabalidator.Configuration
         /// </summary>
         public NestedValidatorDescriptor NestedValidator { get; private set; }
 
+        internal bool HasCondition => _condition != null;
+
         internal static PropertyRuleDescriptor Create<T, TProperty>(Expression<Func<T, TProperty>> expression)
         {
             var path = PropertyPathResolver.Resolve(expression);

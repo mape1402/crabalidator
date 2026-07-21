@@ -66,6 +66,7 @@ namespace Crabalidator.Planning
                     propertyRule.PropertyPath,
                     propertyRule.PropertyType,
                     propertyRule.CascadeMode,
+                    propertyRule.HasCondition,
                     rules,
                     CreateNestedValidationPlan(propertyRule),
                     propertyRule.GetValue,

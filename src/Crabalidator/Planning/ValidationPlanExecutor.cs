@@ -202,6 +202,14 @@ namespace Crabalidator.Planning
             return ExecuteInto(nested.Plan, attemptedValue, CombinePath(pathPrefix, property.PropertyPath), failures);
         }
 
+        internal static List<ValidationFailure> AddNestedFailures(
+            ValidationPlan plan,
+            int propertyIndex,
+            object attemptedValue,
+            string pathPrefix,
+            List<ValidationFailure> failures)
+            => AddNestedFailures(failures, plan.Properties[propertyIndex], attemptedValue, pathPrefix);
+
         private static async ValueTask<List<ValidationFailure>> AddNestedFailuresAsync(
             List<ValidationFailure> failures,
             PropertyValidationPlan property,
