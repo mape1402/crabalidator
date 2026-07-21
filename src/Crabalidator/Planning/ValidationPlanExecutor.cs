@@ -61,9 +61,87 @@ namespace Crabalidator.Planning
                         break;
                     }
                 }
+
+                failures = AddNestedFailures(failures, property, attemptedValue);
             }
 
             return failures == null ? ValidationResult.Success : ValidationResult.FromFailures(failures);
+        }
+
+        private static List<ValidationFailure> AddNestedFailures(
+            List<ValidationFailure> failures,
+            PropertyValidationPlan property,
+            object attemptedValue)
+        {
+            var nested = property.NestedValidation;
+            if (nested == null || attemptedValue == null)
+            {
+                return failures;
+            }
+
+            if (nested.IsCollection)
+            {
+                var index = 0;
+                foreach (var item in nested.Enumerate(attemptedValue))
+                {
+                    failures = AddNestedResultFailures(
+                        failures,
+                        $"{property.PropertyPath}[{index}]",
+                        item,
+                        nested.Validate(item));
+                    index++;
+                }
+
+                return failures;
+            }
+
+            return AddNestedResultFailures(
+                failures,
+                property.PropertyPath,
+                attemptedValue,
+                nested.Validate(attemptedValue));
+        }
+
+        private static List<ValidationFailure> AddNestedResultFailures(
+            List<ValidationFailure> failures,
+            string pathPrefix,
+            object attemptedValue,
+            ValidationResult result)
+        {
+            if (result == null || result.IsValid)
+            {
+                return failures;
+            }
+
+            failures ??= new List<ValidationFailure>();
+
+            foreach (var failure in result.Errors)
+            {
+                failures.Add(new ValidationFailure(
+                    failure.PropertyName,
+                    CombinePath(pathPrefix, failure.PropertyPath),
+                    failure.ErrorMessage,
+                    failure.AttemptedValue ?? attemptedValue,
+                    failure.ErrorCode,
+                    failure.Severity));
+            }
+
+            return failures;
+        }
+
+        private static string CombinePath(string prefix, string suffix)
+        {
+            if (string.IsNullOrWhiteSpace(prefix))
+            {
+                return suffix ?? string.Empty;
+            }
+
+            if (string.IsNullOrWhiteSpace(suffix))
+            {
+                return prefix;
+            }
+
+            return $"{prefix}.{suffix}";
         }
     }
 }

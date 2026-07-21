@@ -17,6 +17,7 @@ namespace Crabalidator.Planning
         /// <param name="propertyType">The property type.</param>
         /// <param name="cascadeMode">The cascade mode.</param>
         /// <param name="rules">The rule plans.</param>
+        /// <param name="nestedValidation">The nested validation plan.</param>
         /// <param name="getValue">The configured value accessor.</param>
         /// <param name="shouldValidate">The configured property condition.</param>
         internal PropertyValidationPlan(
@@ -26,6 +27,7 @@ namespace Crabalidator.Planning
             Type propertyType,
             CascadeMode cascadeMode,
             IReadOnlyList<RulePlan> rules,
+            NestedValidationPlan nestedValidation,
             Func<object, object> getValue,
             Func<object, bool> shouldValidate)
         {
@@ -35,6 +37,7 @@ namespace Crabalidator.Planning
             PropertyType = propertyType ?? throw new ArgumentNullException(nameof(propertyType));
             CascadeMode = cascadeMode;
             Rules = rules ?? throw new ArgumentNullException(nameof(rules));
+            NestedValidation = nestedValidation;
             _getValue = getValue ?? throw new ArgumentNullException(nameof(getValue));
             _shouldValidate = shouldValidate ?? throw new ArgumentNullException(nameof(shouldValidate));
         }
@@ -68,6 +71,11 @@ namespace Crabalidator.Planning
         /// Gets the planned rules.
         /// </summary>
         public IReadOnlyList<RulePlan> Rules { get; }
+
+        /// <summary>
+        /// Gets the nested validation plan, when configured.
+        /// </summary>
+        public NestedValidationPlan NestedValidation { get; }
 
         internal object GetValue(object instance)
             => _getValue(instance);

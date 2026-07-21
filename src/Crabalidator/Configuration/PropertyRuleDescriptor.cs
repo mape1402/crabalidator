@@ -48,6 +48,11 @@ namespace Crabalidator.Configuration
         /// </summary>
         public CascadeMode CascadeMode { get; private set; }
 
+        /// <summary>
+        /// Gets the nested validator, when configured.
+        /// </summary>
+        public NestedValidatorDescriptor NestedValidator { get; private set; }
+
         internal static PropertyRuleDescriptor Create<T, TProperty>(Expression<Func<T, TProperty>> expression)
         {
             var path = PropertyPathResolver.Resolve(expression);
@@ -75,6 +80,9 @@ namespace Crabalidator.Configuration
 
         internal void SetCondition(Func<object, bool> condition)
             => _condition = condition ?? throw new ArgumentNullException(nameof(condition));
+
+        internal void SetNestedValidator(NestedValidatorDescriptor nestedValidator)
+            => NestedValidator = nestedValidator ?? throw new ArgumentNullException(nameof(nestedValidator));
 
         internal bool ShouldValidate(object instance)
             => _condition == null || _condition(instance);

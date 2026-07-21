@@ -96,5 +96,15 @@ namespace Crabalidator
         /// Sets cascade behavior for the property rule.
         /// </summary>
         ICrabRuleBuilder<T, TProperty> Cascade(CascadeMode cascadeMode);
+
+        /// <summary>
+        /// Applies a child validator to the property value.
+        /// </summary>
+        ICrabRuleBuilder<T, TProperty> SetValidator<TChild>(CrabValidator<TChild> validator);
+
+        /// <summary>
+        /// Applies a child validator to each item in the property collection.
+        /// </summary>
+        ICrabRuleBuilder<T, TProperty> RuleForEach<TElement>(CrabValidator<TElement> validator);
     }
 }

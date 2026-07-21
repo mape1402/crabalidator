@@ -18,8 +18,8 @@ namespace Crabalidator.Samples.Basic
                 .NotNull()
                 .MaximumLength(25);
 
-            RuleFor(x => x.Address.PostalCode)
-                .Length(5, 5);
+            RuleFor(x => x.Address)
+                .SetValidator(new AddressValidator());
 
             RuleFor(x => x.Status)
                 .Must(x => x == "ACTIVE")

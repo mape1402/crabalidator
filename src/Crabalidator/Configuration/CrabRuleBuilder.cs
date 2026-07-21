@@ -1,5 +1,7 @@
 namespace Crabalidator.Configuration
 {
+    using System.Collections;
+
     /// <summary>
     /// Fluent builder for property rules.
     /// </summary>
@@ -92,6 +94,48 @@ namespace Crabalidator.Configuration
         public ICrabRuleBuilder<T, TProperty> Cascade(CascadeMode cascadeMode)
         {
             _propertyRule.SetCascadeMode(cascadeMode);
+            return this;
+        }
+
+        public ICrabRuleBuilder<T, TProperty> SetValidator<TChild>(CrabValidator<TChild> validator)
+        {
+            if (validator == null)
+            {
+                throw new ArgumentNullException(nameof(validator));
+            }
+
+            if (!typeof(TChild).IsAssignableFrom(typeof(TProperty)))
+            {
+                throw new InvalidOperationException(
+                    $"Validator for '{typeof(TChild).FullName}' cannot validate property '{_propertyRule.PropertyPath}' of type '{typeof(TProperty).FullName}'.");
+            }
+
+            _propertyRule.SetNestedValidator(new NestedValidatorDescriptor(
+                typeof(TChild),
+                false,
+                value => value == null ? ValidationResult.Success : validator.Validate((TChild)value)));
+
+            return this;
+        }
+
+        public ICrabRuleBuilder<T, TProperty> RuleForEach<TElement>(CrabValidator<TElement> validator)
+        {
+            if (validator == null)
+            {
+                throw new ArgumentNullException(nameof(validator));
+            }
+
+            if (!NestedValidatorDescriptor.IsEnumerableButNotString(typeof(TProperty)))
+            {
+                throw new InvalidOperationException(
+                    $"RuleForEach requires an enumerable property, but '{_propertyRule.PropertyPath}' is '{typeof(TProperty).FullName}'.");
+            }
+
+            _propertyRule.SetNestedValidator(new NestedValidatorDescriptor(
+                typeof(TElement),
+                true,
+                value => value == null ? ValidationResult.Success : validator.Validate((TElement)value)));
+
             return this;
         }
 

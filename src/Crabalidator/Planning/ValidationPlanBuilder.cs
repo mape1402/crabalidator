@@ -66,6 +66,7 @@ namespace Crabalidator.Planning
                     propertyRule.PropertyType,
                     propertyRule.CascadeMode,
                     rules,
+                    CreateNestedValidationPlan(propertyRule),
                     propertyRule.GetValue,
                     propertyRule.ShouldValidate));
             }
@@ -75,6 +76,20 @@ namespace Crabalidator.Planning
                 descriptor.ModelType,
                 properties,
                 diagnostics);
+        }
+
+        private static NestedValidationPlan CreateNestedValidationPlan(PropertyRuleDescriptor propertyRule)
+        {
+            var nested = propertyRule.NestedValidator;
+            if (nested == null)
+            {
+                return null;
+            }
+
+            return new NestedValidationPlan(
+                nested.ModelType,
+                nested.IsCollection,
+                nested.Validate);
         }
     }
 }

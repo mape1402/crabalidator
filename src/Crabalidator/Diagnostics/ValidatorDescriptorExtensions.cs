@@ -32,6 +32,12 @@ namespace Crabalidator.Diagnostics
                 {
                     builder.AppendLine($"  - {rule.Kind}");
                 }
+
+                if (propertyRule.NestedValidator != null)
+                {
+                    var kind = propertyRule.NestedValidator.IsCollection ? "RuleForEach" : "SetValidator";
+                    builder.AppendLine($"  - {kind}({propertyRule.NestedValidator.ModelType.Name})");
+                }
             }
 
             return builder.ToString();
