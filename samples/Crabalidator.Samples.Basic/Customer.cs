@@ -13,5 +13,11 @@ namespace Crabalidator.Samples.Basic
         public string Status { get; set; }
 
         public bool IsDraft { get; set; }
+
+        public string Tier { get; set; }
+
+        public string ReferralCode { get; set; }
+
+        public int RiskScore { get; set; }
     }
 }

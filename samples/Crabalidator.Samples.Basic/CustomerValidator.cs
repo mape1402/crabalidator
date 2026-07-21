@@ -25,6 +25,15 @@ namespace Crabalidator.Samples.Basic
                 .Must(x => x == "ACTIVE")
                 .WithMessage("Customer status must be ACTIVE.")
                 .Unless(x => x.IsDraft);
+
+            RuleFor(x => x.Tier)
+                .Equal("PRO");
+
+            RuleFor(x => x.ReferralCode)
+                .NotEqual("BLOCKED");
+
+            RuleFor(x => x.RiskScore)
+                .LessThanOrEqualTo(50);
         }
     }
 }
