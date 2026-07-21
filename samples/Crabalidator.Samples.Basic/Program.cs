@@ -16,6 +16,7 @@ var registrationValidator = provider.GetRequiredService<CrabValidator<Registrati
 Console.WriteLine("Crabalidator basic sample");
 Console.WriteLine();
 Console.WriteLine(customerValidator.Descriptor.DescribeConfiguration());
+Console.WriteLine(customerValidator.DescribePlan());
 
 var validCustomer = new Customer
 {

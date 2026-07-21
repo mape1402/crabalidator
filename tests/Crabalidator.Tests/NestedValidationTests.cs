@@ -59,6 +59,8 @@ namespace Crabalidator.Tests
         {
             var validator = new OrderValidator();
 
+            Assert.Empty(validator.Plan.Diagnostics);
+
             var customer = validator.Plan.Properties.Single(x => x.PropertyPath == "Customer");
             var items = validator.Plan.Properties.Single(x => x.PropertyPath == "Items");
 

@@ -18,5 +18,5 @@ dotnet test
 Run the basic sample:
 
 ```bash
-dotnet run --project samples/Crabalidator.Samples.Basic --framework net8.0
+dotnet run --project samples/Crabalidator.Samples.Basic
 ```

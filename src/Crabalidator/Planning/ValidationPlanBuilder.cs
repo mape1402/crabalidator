@@ -31,7 +31,7 @@ namespace Crabalidator.Planning
                 var propertyRule = descriptor.Rules[propertyIndex];
                 var rules = new List<RulePlan>(propertyRule.Rules.Count);
 
-                if (propertyRule.Rules.Count == 0)
+                if (propertyRule.Rules.Count == 0 && propertyRule.NestedValidator == null)
                 {
                     diagnostics.Add(ValidationPlanDiagnostic.Warning(
                         "CRABPLAN002",

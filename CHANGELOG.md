@@ -13,3 +13,4 @@ All notable changes to Crabalidator will be documented in this file.
 - Added fluent rule metadata, conditions, cascade behavior, and custom predicates.
 - Added nested object and collection validation with prefixed child failure paths.
 - Added async custom validation with cancellation support and async nested validator execution.
+- Added readable validation plan diagnostics through `DescribePlan()`.
