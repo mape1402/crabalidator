@@ -91,6 +91,7 @@ namespace Crabalidator.Planning
                 nested.ModelType,
                 nested.IsCollection,
                 nested.IsAsync,
+                nested.Plan,
                 nested.Validate,
                 nested.ValidateAsync);
         }

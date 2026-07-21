@@ -12,8 +12,13 @@ namespace Crabalidator
         /// </summary>
         /// <param name="errors">The validation failures.</param>
         public ValidationResult(IEnumerable<ValidationFailure> errors)
+            : this((errors ?? Array.Empty<ValidationFailure>()).ToArray())
         {
-            Errors = (errors ?? Array.Empty<ValidationFailure>()).ToArray();
+        }
+
+        private ValidationResult(IReadOnlyList<ValidationFailure> errors)
+        {
+            Errors = errors ?? Array.Empty<ValidationFailure>();
         }
 
         /// <summary>
@@ -37,6 +42,9 @@ namespace Crabalidator
         /// <param name="errors">The validation failures.</param>
         /// <returns>A validation result.</returns>
         public static ValidationResult FromFailures(IEnumerable<ValidationFailure> errors)
+            => new ValidationResult(errors);
+
+        internal static ValidationResult FromFailureList(List<ValidationFailure> errors)
             => new ValidationResult(errors);
     }
 }

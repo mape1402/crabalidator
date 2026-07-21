@@ -126,10 +126,11 @@ namespace Crabalidator.Configuration
                 typeof(TChild),
                 false,
                 validator.Plan.RequiresAsync,
-                value => value == null ? ValidationResult.Success : validator.Validate((TChild)value),
+                validator.Plan,
+                value => value == null ? ValidationResult.Success : validator.Plan.Execute(value),
                 (value, cancellationToken) => value == null
                     ? new ValueTask<ValidationResult>(ValidationResult.Success)
-                    : validator.ValidateAsync((TChild)value, cancellationToken)));
+                    : validator.Plan.ExecuteAsync(value, cancellationToken)));
 
             return this;
         }
@@ -151,10 +152,11 @@ namespace Crabalidator.Configuration
                 typeof(TElement),
                 true,
                 validator.Plan.RequiresAsync,
-                value => value == null ? ValidationResult.Success : validator.Validate((TElement)value),
+                validator.Plan,
+                value => value == null ? ValidationResult.Success : validator.Plan.Execute(value),
                 (value, cancellationToken) => value == null
                     ? new ValueTask<ValidationResult>(ValidationResult.Success)
-                    : validator.ValidateAsync((TElement)value, cancellationToken)));
+                    : validator.Plan.ExecuteAsync(value, cancellationToken)));
 
             return this;
         }

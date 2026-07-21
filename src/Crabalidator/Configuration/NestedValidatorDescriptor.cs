@@ -1,4 +1,5 @@
 using System.Collections;
+using Crabalidator.Planning;
 
 namespace Crabalidator.Configuration
 {
@@ -14,12 +15,14 @@ namespace Crabalidator.Configuration
             Type modelType,
             bool isCollection,
             bool isAsync,
+            ValidationPlan plan,
             Func<object, ValidationResult> validate,
             Func<object, CancellationToken, ValueTask<ValidationResult>> validateAsync)
         {
             ModelType = modelType ?? throw new ArgumentNullException(nameof(modelType));
             IsCollection = isCollection;
             IsAsync = isAsync;
+            Plan = plan ?? throw new ArgumentNullException(nameof(plan));
             _validate = validate ?? throw new ArgumentNullException(nameof(validate));
             _validateAsync = validateAsync ?? throw new ArgumentNullException(nameof(validateAsync));
         }
@@ -38,6 +41,8 @@ namespace Crabalidator.Configuration
         /// Gets a value indicating whether this nested validator requires async execution.
         /// </summary>
         public bool IsAsync { get; }
+
+        internal ValidationPlan Plan { get; }
 
         internal ValidationResult Validate(object instance)
             => _validate(instance);

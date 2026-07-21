@@ -22,7 +22,14 @@ namespace Crabalidator.Runtime
         }
 
         public ValidationResult Validate(T instance)
-            => Validate(new ValidationContext<T>(instance));
+        {
+            if (_validator.Plan.RequiresAsync)
+            {
+                throw new InvalidOperationException("This validator contains async rules and must be executed with ValidateAsync.");
+            }
+
+            return _compiledValidator.Value.Validate(instance);
+        }
 
         public ValidationResult Validate(ValidationContext<T> context)
         {
@@ -40,7 +47,14 @@ namespace Crabalidator.Runtime
         }
 
         public ValueTask<ValidationResult> ValidateAsync(T instance, CancellationToken cancellationToken = default)
-            => ValidateAsync(new ValidationContext<T>(instance), cancellationToken);
+        {
+            if (_validator.Plan.RequiresAsync)
+            {
+                return ValidationPlanExecutor.ExecuteAsync(_validator.Plan, instance, cancellationToken);
+            }
+
+            return new ValueTask<ValidationResult>(Validate(instance));
+        }
 
         public ValueTask<ValidationResult> ValidateAsync(ValidationContext<T> context, CancellationToken cancellationToken = default)
         {

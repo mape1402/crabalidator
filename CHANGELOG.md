@@ -15,3 +15,8 @@ All notable changes to Crabalidator will be documented in this file.
 - Added async custom validation with cancellation support and async nested validator execution.
 - Added readable validation plan diagnostics through `DescribePlan()`.
 - Added DI-backed runtime diagnostics for registered validators and model plans.
+- Added initial BenchmarkDotNet scenarios for direct, interpreted, generated DI, nested, and async validation paths.
+- Reduced context allocations in direct, DI, and nested validation hot paths.
+- Added FluentValidation benchmark baselines for sync, nested, and async validation.
+- Inlined nested plan execution to avoid intermediate child `ValidationResult` allocations.
+- Avoided duplicate failure collection copies when plans produce invalid results.

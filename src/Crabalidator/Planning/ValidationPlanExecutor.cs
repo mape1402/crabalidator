@@ -66,9 +66,19 @@ namespace Crabalidator.Planning
         private static ValidationResult ExecuteCore(ValidationPlan plan, object instance)
         {
             List<ValidationFailure> failures = null;
+            failures = ExecuteInto(plan, instance, null, failures);
+            return failures == null ? ValidationResult.Success : ValidationResult.FromFailureList(failures);
+        }
 
-            foreach (var property in plan.Properties)
+        private static List<ValidationFailure> ExecuteInto(
+            ValidationPlan plan,
+            object instance,
+            string pathPrefix,
+            List<ValidationFailure> failures)
+        {
+            for (var propertyIndex = 0; propertyIndex < plan.Properties.Count; propertyIndex++)
             {
+                var property = plan.Properties[propertyIndex];
                 if (!property.ShouldValidate(instance))
                 {
                     continue;
@@ -76,8 +86,9 @@ namespace Crabalidator.Planning
 
                 var attemptedValue = property.GetValue(instance);
 
-                foreach (var rule in property.Rules)
+                for (var ruleIndex = 0; ruleIndex < property.Rules.Count; ruleIndex++)
                 {
+                    var rule = property.Rules[ruleIndex];
                     if (rule.IsValid(attemptedValue))
                     {
                         continue;
@@ -86,7 +97,7 @@ namespace Crabalidator.Planning
                     failures ??= new List<ValidationFailure>();
                     failures.Add(new ValidationFailure(
                         rule.Failure.PropertyName,
-                        rule.Failure.PropertyPath,
+                        CombinePath(pathPrefix, rule.Failure.PropertyPath),
                         rule.Failure.ErrorMessage,
                         attemptedValue,
                         rule.Failure.ErrorCode,
@@ -98,10 +109,10 @@ namespace Crabalidator.Planning
                     }
                 }
 
-                failures = AddNestedFailures(failures, property, attemptedValue);
+                failures = AddNestedFailures(failures, property, attemptedValue, pathPrefix);
             }
 
-            return failures == null ? ValidationResult.Success : ValidationResult.FromFailures(failures);
+            return failures;
         }
 
         private static async ValueTask<ValidationResult> ExecuteAsyncCore(
@@ -111,9 +122,20 @@ namespace Crabalidator.Planning
         {
             cancellationToken.ThrowIfCancellationRequested();
             List<ValidationFailure> failures = null;
+            failures = await ExecuteIntoAsync(plan, instance, null, failures, cancellationToken).ConfigureAwait(false);
+            return failures == null ? ValidationResult.Success : ValidationResult.FromFailureList(failures);
+        }
 
-            foreach (var property in plan.Properties)
+        private static async ValueTask<List<ValidationFailure>> ExecuteIntoAsync(
+            ValidationPlan plan,
+            object instance,
+            string pathPrefix,
+            List<ValidationFailure> failures,
+            CancellationToken cancellationToken)
+        {
+            for (var propertyIndex = 0; propertyIndex < plan.Properties.Count; propertyIndex++)
             {
+                var property = plan.Properties[propertyIndex];
                 cancellationToken.ThrowIfCancellationRequested();
 
                 if (!property.ShouldValidate(instance))
@@ -123,8 +145,9 @@ namespace Crabalidator.Planning
 
                 var attemptedValue = property.GetValue(instance);
 
-                foreach (var rule in property.Rules)
+                for (var ruleIndex = 0; ruleIndex < property.Rules.Count; ruleIndex++)
                 {
+                    var rule = property.Rules[ruleIndex];
                     if (await rule.IsValidAsync(attemptedValue, cancellationToken).ConfigureAwait(false))
                     {
                         continue;
@@ -133,7 +156,7 @@ namespace Crabalidator.Planning
                     failures ??= new List<ValidationFailure>();
                     failures.Add(new ValidationFailure(
                         rule.Failure.PropertyName,
-                        rule.Failure.PropertyPath,
+                        CombinePath(pathPrefix, rule.Failure.PropertyPath),
                         rule.Failure.ErrorMessage,
                         attemptedValue,
                         rule.Failure.ErrorCode,
@@ -145,16 +168,17 @@ namespace Crabalidator.Planning
                     }
                 }
 
-                failures = await AddNestedFailuresAsync(failures, property, attemptedValue, cancellationToken).ConfigureAwait(false);
+                failures = await AddNestedFailuresAsync(failures, property, attemptedValue, pathPrefix, cancellationToken).ConfigureAwait(false);
             }
 
-            return failures == null ? ValidationResult.Success : ValidationResult.FromFailures(failures);
+            return failures;
         }
 
         private static List<ValidationFailure> AddNestedFailures(
             List<ValidationFailure> failures,
             PropertyValidationPlan property,
-            object attemptedValue)
+            object attemptedValue,
+            string pathPrefix)
         {
             var nested = property.NestedValidation;
             if (nested == null || attemptedValue == null)
@@ -167,28 +191,22 @@ namespace Crabalidator.Planning
                 var index = 0;
                 foreach (var item in nested.Enumerate(attemptedValue))
                 {
-                    failures = AddNestedResultFailures(
-                        failures,
-                        $"{property.PropertyPath}[{index}]",
-                        item,
-                        nested.Validate(item));
+                    var itemPrefix = CombinePath(pathPrefix, $"{property.PropertyPath}[{index}]");
+                    failures = ExecuteInto(nested.Plan, item, itemPrefix, failures);
                     index++;
                 }
 
                 return failures;
             }
 
-            return AddNestedResultFailures(
-                failures,
-                property.PropertyPath,
-                attemptedValue,
-                nested.Validate(attemptedValue));
+            return ExecuteInto(nested.Plan, attemptedValue, CombinePath(pathPrefix, property.PropertyPath), failures);
         }
 
         private static async ValueTask<List<ValidationFailure>> AddNestedFailuresAsync(
             List<ValidationFailure> failures,
             PropertyValidationPlan property,
             object attemptedValue,
+            string pathPrefix,
             CancellationToken cancellationToken)
         {
             var nested = property.NestedValidation;
@@ -203,22 +221,24 @@ namespace Crabalidator.Planning
                 foreach (var item in nested.Enumerate(attemptedValue))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    failures = AddNestedResultFailures(
-                        failures,
-                        $"{property.PropertyPath}[{index}]",
+                    failures = await ExecuteIntoAsync(
+                        nested.Plan,
                         item,
-                        await nested.ValidateAsync(item, cancellationToken).ConfigureAwait(false));
+                        CombinePath(pathPrefix, $"{property.PropertyPath}[{index}]"),
+                        failures,
+                        cancellationToken).ConfigureAwait(false);
                     index++;
                 }
 
                 return failures;
             }
 
-            return AddNestedResultFailures(
-                failures,
-                property.PropertyPath,
+            return await ExecuteIntoAsync(
+                nested.Plan,
                 attemptedValue,
-                await nested.ValidateAsync(attemptedValue, cancellationToken).ConfigureAwait(false));
+                CombinePath(pathPrefix, property.PropertyPath),
+                failures,
+                cancellationToken).ConfigureAwait(false);
         }
 
         private static List<ValidationFailure> AddNestedResultFailures(

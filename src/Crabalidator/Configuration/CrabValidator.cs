@@ -34,7 +34,7 @@ namespace Crabalidator
 
         /// <inheritdoc/>
         public ValidationResult Validate(T instance)
-            => Validate(new ValidationContext<T>(instance));
+            => ValidationPlanExecutor.Execute(Plan, instance);
 
         /// <inheritdoc/>
         public ValidationResult Validate(ValidationContext<T> context)
@@ -49,7 +49,7 @@ namespace Crabalidator
 
         /// <inheritdoc/>
         public ValueTask<ValidationResult> ValidateAsync(T instance, CancellationToken cancellationToken = default)
-            => ValidateAsync(new ValidationContext<T>(instance), cancellationToken);
+            => ValidationPlanExecutor.ExecuteAsync(Plan, instance, cancellationToken);
 
         /// <inheritdoc/>
         public ValueTask<ValidationResult> ValidateAsync(ValidationContext<T> context, CancellationToken cancellationToken = default)
