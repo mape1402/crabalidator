@@ -20,7 +20,8 @@ var validCustomer = new Customer
     Name = "Ada Lovelace",
     Age = 37,
     Email = "ada@example.com",
-    Address = new Address { PostalCode = "12345" }
+    Address = new Address { PostalCode = "12345" },
+    Status = "ACTIVE"
 };
 
 var invalidCustomer = new Customer
@@ -28,7 +29,8 @@ var invalidCustomer = new Customer
     Name = "",
     Age = 16,
     Email = "this-email-is-too-long@example.com",
-    Address = new Address { PostalCode = "12" }
+    Address = new Address { PostalCode = "12" },
+    Status = "SUSPENDED"
 };
 
 SampleResultPrinter.Print("Valid customer", crabalidator.Validate(validCustomer));

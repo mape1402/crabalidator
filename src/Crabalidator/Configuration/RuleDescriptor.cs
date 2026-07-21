@@ -34,17 +34,17 @@ namespace Crabalidator.Configuration
         /// <summary>
         /// Gets the default error message.
         /// </summary>
-        public string ErrorMessage { get; }
+        public string ErrorMessage { get; private set; }
 
         /// <summary>
         /// Gets the optional error code.
         /// </summary>
-        public string ErrorCode { get; }
+        public string ErrorCode { get; private set; }
 
         /// <summary>
         /// Gets the failure severity.
         /// </summary>
-        public ValidationSeverity Severity { get; }
+        public ValidationSeverity Severity { get; private set; }
 
         /// <summary>
         /// Gets the comparison value when the rule uses one.
@@ -128,6 +128,41 @@ namespace Crabalidator.Configuration
                 $"'{propertyName}' length must be no more than {maximum}.",
                 value => value == null || GetLength(value) <= maximum,
                 maximum: maximum);
+        }
+
+        internal static RuleDescriptor Must(string propertyName, Func<object, bool> predicate)
+        {
+            if (predicate == null)
+            {
+                throw new ArgumentNullException(nameof(predicate));
+            }
+
+            return new RuleDescriptor(
+                RuleKind.Must,
+                $"'{propertyName}' is not valid.",
+                value => predicate(value));
+        }
+
+        internal RuleDescriptor WithMessage(string message)
+        {
+            ErrorMessage = string.IsNullOrWhiteSpace(message)
+                ? throw new ArgumentException(nameof(message))
+                : message;
+            return this;
+        }
+
+        internal RuleDescriptor WithErrorCode(string errorCode)
+        {
+            ErrorCode = string.IsNullOrWhiteSpace(errorCode)
+                ? throw new ArgumentException(nameof(errorCode))
+                : errorCode;
+            return this;
+        }
+
+        internal RuleDescriptor WithSeverity(ValidationSeverity severity)
+        {
+            Severity = severity;
+            return this;
         }
 
         internal bool IsValid(object value)

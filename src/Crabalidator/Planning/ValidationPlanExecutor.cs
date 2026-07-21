@@ -33,6 +33,11 @@ namespace Crabalidator.Planning
 
             foreach (var property in plan.Properties)
             {
+                if (!property.ShouldValidate(instance))
+                {
+                    continue;
+                }
+
                 var attemptedValue = property.GetValue(instance);
 
                 foreach (var rule in property.Rules)
@@ -50,6 +55,11 @@ namespace Crabalidator.Planning
                         attemptedValue,
                         rule.Failure.ErrorCode,
                         rule.Failure.Severity));
+
+                    if (property.CascadeMode == CascadeMode.Stop)
+                    {
+                        break;
+                    }
                 }
             }
 

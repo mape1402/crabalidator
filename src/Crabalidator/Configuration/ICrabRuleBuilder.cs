@@ -61,5 +61,40 @@ namespace Crabalidator
         /// Requires the value length to be no more than the specified value.
         /// </summary>
         ICrabRuleBuilder<T, TProperty> MaximumLength(int maximum);
+
+        /// <summary>
+        /// Requires the value to satisfy a custom predicate.
+        /// </summary>
+        ICrabRuleBuilder<T, TProperty> Must(Func<TProperty, bool> predicate);
+
+        /// <summary>
+        /// Overrides the error message for the most recently added rule.
+        /// </summary>
+        ICrabRuleBuilder<T, TProperty> WithMessage(string message);
+
+        /// <summary>
+        /// Sets the error code for the most recently added rule.
+        /// </summary>
+        ICrabRuleBuilder<T, TProperty> WithErrorCode(string errorCode);
+
+        /// <summary>
+        /// Sets the severity for the most recently added rule.
+        /// </summary>
+        ICrabRuleBuilder<T, TProperty> WithSeverity(ValidationSeverity severity);
+
+        /// <summary>
+        /// Applies a condition to the property rule.
+        /// </summary>
+        ICrabRuleBuilder<T, TProperty> When(Func<T, bool> condition);
+
+        /// <summary>
+        /// Applies an inverse condition to the property rule.
+        /// </summary>
+        ICrabRuleBuilder<T, TProperty> Unless(Func<T, bool> condition);
+
+        /// <summary>
+        /// Sets cascade behavior for the property rule.
+        /// </summary>
+        ICrabRuleBuilder<T, TProperty> Cascade(CascadeMode cascadeMode);
     }
 }

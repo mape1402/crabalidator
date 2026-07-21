@@ -9,5 +9,9 @@ namespace Crabalidator.Samples.Basic
         public string Email { get; set; }
 
         public Address Address { get; set; } = new Address();
+
+        public string Status { get; set; }
+
+        public bool IsDraft { get; set; }
     }
 }

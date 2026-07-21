@@ -9,6 +9,7 @@ namespace Crabalidator.Configuration
     {
         private readonly List<RuleDescriptor> _rules = new List<RuleDescriptor>();
         private readonly Func<object, object> _accessor;
+        private Func<object, bool> _condition;
 
         internal PropertyRuleDescriptor(
             string propertyName,
@@ -42,6 +43,11 @@ namespace Crabalidator.Configuration
         /// </summary>
         public IReadOnlyList<RuleDescriptor> Rules => _rules;
 
+        /// <summary>
+        /// Gets the cascade mode.
+        /// </summary>
+        public CascadeMode CascadeMode { get; private set; }
+
         internal static PropertyRuleDescriptor Create<T, TProperty>(Expression<Func<T, TProperty>> expression)
         {
             var path = PropertyPathResolver.Resolve(expression);
@@ -63,6 +69,15 @@ namespace Crabalidator.Configuration
 
             _rules.Add(rule);
         }
+
+        internal void SetCascadeMode(CascadeMode cascadeMode)
+            => CascadeMode = cascadeMode;
+
+        internal void SetCondition(Func<object, bool> condition)
+            => _condition = condition ?? throw new ArgumentNullException(nameof(condition));
+
+        internal bool ShouldValidate(object instance)
+            => _condition == null || _condition(instance);
 
         internal object GetValue(object instance)
         {

@@ -64,8 +64,10 @@ namespace Crabalidator.Planning
                     propertyRule.PropertyName,
                     propertyRule.PropertyPath,
                     propertyRule.PropertyType,
+                    propertyRule.CascadeMode,
                     rules,
-                    propertyRule.GetValue));
+                    propertyRule.GetValue,
+                    propertyRule.ShouldValidate));
             }
 
             return new ValidationPlan(

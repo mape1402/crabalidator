@@ -5,7 +5,10 @@ namespace Crabalidator.Samples.Basic
         public CustomerValidator()
         {
             RuleFor(x => x.Name)
+                .Cascade(CascadeMode.Stop)
                 .NotEmpty()
+                .WithMessage("Customer name is required.")
+                .WithErrorCode("CUSTOMER_NAME_REQUIRED")
                 .MaximumLength(20);
 
             RuleFor(x => x.Age)
@@ -17,6 +20,11 @@ namespace Crabalidator.Samples.Basic
 
             RuleFor(x => x.Address.PostalCode)
                 .Length(5, 5);
+
+            RuleFor(x => x.Status)
+                .Must(x => x == "ACTIVE")
+                .WithMessage("Customer status must be ACTIVE.")
+                .Unless(x => x.IsDraft);
         }
     }
 }

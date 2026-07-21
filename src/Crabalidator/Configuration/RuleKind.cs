@@ -58,6 +58,11 @@ namespace Crabalidator.Configuration
         /// <summary>
         /// Maximum length rule.
         /// </summary>
-        MaximumLength
+        MaximumLength,
+
+        /// <summary>
+        /// Custom predicate rule.
+        /// </summary>
+        Must
     }
 }

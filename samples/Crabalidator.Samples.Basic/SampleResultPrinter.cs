@@ -12,7 +12,8 @@ namespace Crabalidator.Samples.Basic
 
             foreach (var failure in result.Errors)
             {
-                Console.WriteLine($"- {failure.PropertyPath}: {failure.ErrorMessage}");
+                var code = string.IsNullOrWhiteSpace(failure.ErrorCode) ? string.Empty : $" [{failure.ErrorCode}]";
+                Console.WriteLine($"- {failure.PropertyPath}{code}: {failure.ErrorMessage}");
             }
         }
     }

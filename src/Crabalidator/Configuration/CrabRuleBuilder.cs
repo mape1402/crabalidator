@@ -8,6 +8,7 @@ namespace Crabalidator.Configuration
     internal sealed class CrabRuleBuilder<T, TProperty> : ICrabRuleBuilder<T, TProperty>
     {
         private readonly PropertyRuleDescriptor _propertyRule;
+        private RuleDescriptor _currentRule;
 
         public CrabRuleBuilder(PropertyRuleDescriptor propertyRule)
         {
@@ -47,9 +48,68 @@ namespace Crabalidator.Configuration
         public ICrabRuleBuilder<T, TProperty> MaximumLength(int maximum)
             => Add(RuleDescriptor.MaximumLength(_propertyRule.PropertyName, maximum));
 
+        public ICrabRuleBuilder<T, TProperty> Must(Func<TProperty, bool> predicate)
+        {
+            if (predicate == null)
+            {
+                throw new ArgumentNullException(nameof(predicate));
+            }
+
+            return Add(RuleDescriptor.Must(_propertyRule.PropertyName, value => predicate((TProperty)value)));
+        }
+
+        public ICrabRuleBuilder<T, TProperty> WithMessage(string message)
+            => ConfigureCurrent(rule => rule.WithMessage(message));
+
+        public ICrabRuleBuilder<T, TProperty> WithErrorCode(string errorCode)
+            => ConfigureCurrent(rule => rule.WithErrorCode(errorCode));
+
+        public ICrabRuleBuilder<T, TProperty> WithSeverity(ValidationSeverity severity)
+            => ConfigureCurrent(rule => rule.WithSeverity(severity));
+
+        public ICrabRuleBuilder<T, TProperty> When(Func<T, bool> condition)
+        {
+            if (condition == null)
+            {
+                throw new ArgumentNullException(nameof(condition));
+            }
+
+            _propertyRule.SetCondition(instance => condition((T)instance));
+            return this;
+        }
+
+        public ICrabRuleBuilder<T, TProperty> Unless(Func<T, bool> condition)
+        {
+            if (condition == null)
+            {
+                throw new ArgumentNullException(nameof(condition));
+            }
+
+            _propertyRule.SetCondition(instance => !condition((T)instance));
+            return this;
+        }
+
+        public ICrabRuleBuilder<T, TProperty> Cascade(CascadeMode cascadeMode)
+        {
+            _propertyRule.SetCascadeMode(cascadeMode);
+            return this;
+        }
+
         private ICrabRuleBuilder<T, TProperty> Add(RuleDescriptor rule)
         {
             _propertyRule.AddRule(rule);
+            _currentRule = rule;
+            return this;
+        }
+
+        private ICrabRuleBuilder<T, TProperty> ConfigureCurrent(Func<RuleDescriptor, RuleDescriptor> configure)
+        {
+            if (_currentRule == null)
+            {
+                throw new InvalidOperationException("No validation rule has been configured for this property.");
+            }
+
+            configure(_currentRule);
             return this;
         }
     }
