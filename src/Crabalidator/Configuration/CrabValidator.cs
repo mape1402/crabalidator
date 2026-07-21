@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Crabalidator.Configuration;
+using Crabalidator.Planning;
 
 namespace Crabalidator
 {
@@ -10,6 +11,7 @@ namespace Crabalidator
     public abstract class CrabValidator<T> : IValidator<T>, IAsyncValidator<T>
     {
         private readonly ValidatorDescriptor _descriptor;
+        private readonly Lazy<ValidationPlan> _plan;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CrabValidator{T}"/> class.
@@ -17,12 +19,18 @@ namespace Crabalidator
         protected CrabValidator()
         {
             _descriptor = new ValidatorDescriptor(GetType(), typeof(T));
+            _plan = new Lazy<ValidationPlan>(() => new ValidationPlanBuilder().Build(_descriptor));
         }
 
         /// <summary>
         /// Gets the captured validator descriptor.
         /// </summary>
         public ValidatorDescriptor Descriptor => _descriptor;
+
+        /// <summary>
+        /// Gets the validation plan for this validator.
+        /// </summary>
+        public ValidationPlan Plan => _plan.Value;
 
         /// <inheritdoc/>
         public ValidationResult Validate(T instance)
@@ -36,31 +44,7 @@ namespace Crabalidator
                 throw new ArgumentNullException(nameof(context));
             }
 
-            List<ValidationFailure> failures = null;
-
-            foreach (var propertyRule in _descriptor.Rules)
-            {
-                var attemptedValue = propertyRule.GetValue(context.InstanceToValidate);
-
-                foreach (var rule in propertyRule.Rules)
-                {
-                    if (rule.IsValid(attemptedValue))
-                    {
-                        continue;
-                    }
-
-                    failures ??= new List<ValidationFailure>();
-                    failures.Add(new ValidationFailure(
-                        propertyRule.PropertyName,
-                        propertyRule.PropertyPath,
-                        rule.ErrorMessage,
-                        attemptedValue,
-                        rule.ErrorCode,
-                        rule.Severity));
-                }
-            }
-
-            return failures == null ? ValidationResult.Success : ValidationResult.FromFailures(failures);
+            return ValidationPlanExecutor.Execute(Plan, context);
         }
 
         /// <inheritdoc/>
