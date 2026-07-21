@@ -1,0 +1,56 @@
+namespace Crabalidator.Configuration
+{
+    /// <summary>
+    /// Fluent builder for property rules.
+    /// </summary>
+    /// <typeparam name="T">The model type.</typeparam>
+    /// <typeparam name="TProperty">The property type.</typeparam>
+    internal sealed class CrabRuleBuilder<T, TProperty> : ICrabRuleBuilder<T, TProperty>
+    {
+        private readonly PropertyRuleDescriptor _propertyRule;
+
+        public CrabRuleBuilder(PropertyRuleDescriptor propertyRule)
+        {
+            _propertyRule = propertyRule ?? throw new ArgumentNullException(nameof(propertyRule));
+        }
+
+        public ICrabRuleBuilder<T, TProperty> NotNull()
+            => Add(RuleDescriptor.NotNull(_propertyRule.PropertyName));
+
+        public ICrabRuleBuilder<T, TProperty> NotEmpty()
+            => Add(RuleDescriptor.NotEmpty(_propertyRule.PropertyName, typeof(TProperty)));
+
+        public ICrabRuleBuilder<T, TProperty> Equal(TProperty value)
+            => Add(RuleDescriptor.Equal(_propertyRule.PropertyName, value));
+
+        public ICrabRuleBuilder<T, TProperty> NotEqual(TProperty value)
+            => Add(RuleDescriptor.NotEqual(_propertyRule.PropertyName, value));
+
+        public ICrabRuleBuilder<T, TProperty> GreaterThan(TProperty value)
+            => Add(RuleDescriptor.Comparison(_propertyRule.PropertyName, RuleKind.GreaterThan, value));
+
+        public ICrabRuleBuilder<T, TProperty> GreaterThanOrEqualTo(TProperty value)
+            => Add(RuleDescriptor.Comparison(_propertyRule.PropertyName, RuleKind.GreaterThanOrEqualTo, value));
+
+        public ICrabRuleBuilder<T, TProperty> LessThan(TProperty value)
+            => Add(RuleDescriptor.Comparison(_propertyRule.PropertyName, RuleKind.LessThan, value));
+
+        public ICrabRuleBuilder<T, TProperty> LessThanOrEqualTo(TProperty value)
+            => Add(RuleDescriptor.Comparison(_propertyRule.PropertyName, RuleKind.LessThanOrEqualTo, value));
+
+        public ICrabRuleBuilder<T, TProperty> Length(int minimum, int maximum)
+            => Add(RuleDescriptor.Length(_propertyRule.PropertyName, minimum, maximum));
+
+        public ICrabRuleBuilder<T, TProperty> MinimumLength(int minimum)
+            => Add(RuleDescriptor.MinimumLength(_propertyRule.PropertyName, minimum));
+
+        public ICrabRuleBuilder<T, TProperty> MaximumLength(int maximum)
+            => Add(RuleDescriptor.MaximumLength(_propertyRule.PropertyName, maximum));
+
+        private ICrabRuleBuilder<T, TProperty> Add(RuleDescriptor rule)
+        {
+            _propertyRule.AddRule(rule);
+            return this;
+        }
+    }
+}
