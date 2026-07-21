@@ -2,6 +2,16 @@ namespace Crabalidator.Planning
 {
     internal static class ValidationPlanExecutor
     {
+        public static ValidationResult Execute(ValidationPlan plan, object instance)
+        {
+            if (plan == null)
+            {
+                throw new ArgumentNullException(nameof(plan));
+            }
+
+            return ExecuteCore(plan, instance);
+        }
+
         public static ValidationResult Execute<T>(ValidationPlan plan, ValidationContext<T> context)
         {
             if (plan == null)
@@ -14,11 +24,16 @@ namespace Crabalidator.Planning
                 throw new ArgumentNullException(nameof(context));
             }
 
+            return ExecuteCore(plan, context.InstanceToValidate);
+        }
+
+        private static ValidationResult ExecuteCore(ValidationPlan plan, object instance)
+        {
             List<ValidationFailure> failures = null;
 
             foreach (var property in plan.Properties)
             {
-                var attemptedValue = property.GetValue(context.InstanceToValidate);
+                var attemptedValue = property.GetValue(instance);
 
                 foreach (var rule in property.Rules)
                 {

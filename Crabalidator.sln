@@ -1,3 +1,4 @@
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34728.123
@@ -35,6 +36,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{30D6
 		.github\workflows\publish.yaml = .github\workflows\publish.yaml
 		.github\workflows\release.yml = .github\workflows\release.yml
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{5D20AA90-6969-D8BD-9DCD-8634F4692FDA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crabalidator.Samples.Basic", "samples\Crabalidator.Samples.Basic\Crabalidator.Samples.Basic.csproj", "{0EA1C865-FF1B-443E-9135-A457C682F1BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -82,6 +87,18 @@ Global
 		{6D7C1753-E2B7-4F06-A879-CBB196934B99}.Release|x64.Build.0 = Release|Any CPU
 		{6D7C1753-E2B7-4F06-A879-CBB196934B99}.Release|x86.ActiveCfg = Release|Any CPU
 		{6D7C1753-E2B7-4F06-A879-CBB196934B99}.Release|x86.Build.0 = Release|Any CPU
+		{0EA1C865-FF1B-443E-9135-A457C682F1BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0EA1C865-FF1B-443E-9135-A457C682F1BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0EA1C865-FF1B-443E-9135-A457C682F1BB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0EA1C865-FF1B-443E-9135-A457C682F1BB}.Debug|x64.Build.0 = Debug|Any CPU
+		{0EA1C865-FF1B-443E-9135-A457C682F1BB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0EA1C865-FF1B-443E-9135-A457C682F1BB}.Debug|x86.Build.0 = Debug|Any CPU
+		{0EA1C865-FF1B-443E-9135-A457C682F1BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0EA1C865-FF1B-443E-9135-A457C682F1BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0EA1C865-FF1B-443E-9135-A457C682F1BB}.Release|x64.ActiveCfg = Release|Any CPU
+		{0EA1C865-FF1B-443E-9135-A457C682F1BB}.Release|x64.Build.0 = Release|Any CPU
+		{0EA1C865-FF1B-443E-9135-A457C682F1BB}.Release|x86.ActiveCfg = Release|Any CPU
+		{0EA1C865-FF1B-443E-9135-A457C682F1BB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -90,6 +107,7 @@ Global
 		{9E763CAB-BEA0-4481-843A-5AD4968B11EB} = {F4FEA638-F252-415C-BDC0-D817B070A4A0}
 		{E4DBD75C-4231-4A11-83B2-127DB20BB2B8} = {AE2A6D14-59B7-4DA5-AF2A-3FBCFC13A59E}
 		{6D7C1753-E2B7-4F06-A879-CBB196934B99} = {2CDF9D43-81E9-48F8-8AA4-E22DC1AA2CB9}
+		{0EA1C865-FF1B-443E-9135-A457C682F1BB} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C0CA8A99-DF4F-4E82-BCEF-7AAF1033BFE1}

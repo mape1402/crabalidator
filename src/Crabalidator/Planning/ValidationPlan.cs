@@ -55,5 +55,13 @@ namespace Crabalidator.Planning
         /// Gets a value indicating whether the plan requires validation context.
         /// </summary>
         public bool RequiresContext { get; }
+
+        /// <summary>
+        /// Executes this plan for an untyped model instance.
+        /// </summary>
+        /// <param name="instance">The model instance.</param>
+        /// <returns>The validation result.</returns>
+        public ValidationResult Execute(object instance)
+            => ValidationPlanExecutor.Execute(this, instance);
     }
 }
