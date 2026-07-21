@@ -9,14 +9,16 @@ services.AddCrabalidator(typeof(CustomerValidator).Assembly);
 
 var provider = services.BuildServiceProvider();
 var crabalidator = provider.GetRequiredService<ICrabalidator>();
+var diagnostics = provider.GetRequiredService<ICrabalidatorDiagnostics>();
 var customerValidator = provider.GetRequiredService<CrabValidator<Customer>>();
 var orderValidator = provider.GetRequiredService<CrabValidator<Order>>();
 var registrationValidator = provider.GetRequiredService<CrabValidator<RegistrationRequest>>();
 
 Console.WriteLine("Crabalidator basic sample");
 Console.WriteLine();
+Console.WriteLine(diagnostics.DescribeRegisteredValidators());
 Console.WriteLine(customerValidator.Descriptor.DescribeConfiguration());
-Console.WriteLine(customerValidator.DescribePlan());
+Console.WriteLine(diagnostics.DescribePlan<Customer>());
 
 var validCustomer = new Customer
 {

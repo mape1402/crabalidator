@@ -1,4 +1,5 @@
 using Crabalidator.DependencyInjection;
+using Crabalidator.Diagnostics;
 using Crabalidator.Runtime;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -65,6 +66,42 @@ namespace Crabalidator.Tests
 
             Assert.NotEqual(typeof(DiCustomerValidator), compiled.ValidatorType);
             Assert.Contains("DiCustomerValidator", compiled.ValidatorType.Name);
+        }
+
+        [Fact]
+        public void Diagnostics_Describe_Registered_Validators()
+        {
+            var services = new ServiceCollection();
+            services.AddCrabalidator(registration => registration.AddValidator<DiCustomerValidator>());
+
+            var provider = services.BuildServiceProvider();
+            var diagnostics = provider.GetRequiredService<ICrabalidatorDiagnostics>();
+
+            var validators = diagnostics.GetRegisteredValidators();
+            var description = diagnostics.DescribeRegisteredValidators();
+
+            var validator = Assert.Single(validators);
+            Assert.Equal(typeof(DiCustomerValidator), validator.ValidatorType);
+            Assert.Equal(typeof(DiCustomer), validator.ModelType);
+            Assert.Contains(typeof(DiCustomerValidator).FullName, description);
+            Assert.Contains(typeof(DiCustomer).FullName, description);
+        }
+
+        [Fact]
+        public void Diagnostics_Describe_Registered_Model_Plan()
+        {
+            var services = new ServiceCollection();
+            services.AddCrabalidator(registration => registration.AddValidator<DiCustomerValidator>());
+
+            var provider = services.BuildServiceProvider();
+            var diagnostics = provider.GetRequiredService<ICrabalidatorDiagnostics>();
+
+            var description = diagnostics.DescribePlan<DiCustomer>();
+
+            Assert.Contains("Validator:", description);
+            Assert.Contains("Model:", description);
+            Assert.Contains("- #0 Name (String)", description);
+            Assert.Contains("- #0 NotEmpty", description);
         }
 
         public sealed class DiCustomerValidator : CrabValidator<DiCustomer>

@@ -14,3 +14,4 @@ All notable changes to Crabalidator will be documented in this file.
 - Added nested object and collection validation with prefixed child failure paths.
 - Added async custom validation with cancellation support and async nested validator execution.
 - Added readable validation plan diagnostics through `DescribePlan()`.
+- Added DI-backed runtime diagnostics for registered validators and model plans.

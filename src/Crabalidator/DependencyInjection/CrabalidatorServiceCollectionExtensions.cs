@@ -1,4 +1,5 @@
 using System.Reflection;
+using Crabalidator.Diagnostics;
 using Crabalidator.Generation;
 using Crabalidator.Generation.Dynabee;
 using Crabalidator.Planning;
@@ -62,6 +63,8 @@ namespace Crabalidator.DependencyInjection
             services.AddSingleton<IValidationPlanBuilder, ValidationPlanBuilder>();
             services.AddSingleton<IValidationGenerationBackend, DynabeeValidationGenerationBackend>();
             services.AddSingleton<ICompiledValidatorRegistry, CompiledValidatorRegistry>();
+            services.AddSingleton(CreateRegistrationCatalog(registration));
+            services.AddTransient<ICrabalidatorDiagnostics, CrabalidatorDiagnostics>();
             services.AddTransient<ICrabalidator, Runtime.Crabalidator>();
 
             foreach (var validatorType in registration.ValidatorTypes)
@@ -70,6 +73,19 @@ namespace Crabalidator.DependencyInjection
             }
 
             return services;
+        }
+
+        private static CrabalidatorRegistrationCatalog CreateRegistrationCatalog(CrabalidatorRegistrationBuilder registration)
+        {
+            var validators = registration.ValidatorTypes
+                .Select(x =>
+                {
+                    CrabalidatorRegistrationBuilder.TryGetModelType(x, out var modelType);
+                    return new CrabalidatorValidatorDiagnostic(x, modelType);
+                })
+                .ToArray();
+
+            return new CrabalidatorRegistrationCatalog(validators);
         }
 
         private static void RegisterValidator(IServiceCollection services, Type validatorType)
