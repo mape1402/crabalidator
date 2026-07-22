@@ -1,22 +1,42 @@
 # Changelog
 
-All notable changes to Crabalidator will be documented in this file.
+## [v1.0.0] - 2026-07-21
 
-## [Unreleased]
+### Added
 
-- Established initial repository structure, architecture notes, and roadmap.
-- Added the Phase 1 core validation model with validators, contexts, results, descriptors, diagnostics, and basic fluent rules.
-- Added backend-neutral validation planning with rule order, failure metadata, diagnostics, and interpreted plan execution.
-- Added the first DynaBee sync generation backend with compiled validator invokers and registry caching.
-- Added a basic console sample project.
-- Added dependency injection registration, validator discovery, compiled validator adapters, and the default Crabalidator service.
-- Added fluent rule metadata, conditions, cascade behavior, and custom predicates.
-- Added nested object and collection validation with prefixed child failure paths.
-- Added async custom validation with cancellation support and async nested validator execution.
-- Added readable validation plan diagnostics through `DescribePlan()`.
-- Added DI-backed runtime diagnostics for registered validators and model plans.
-- Added initial BenchmarkDotNet scenarios for direct, interpreted, generated DI, nested, and async validation paths.
-- Reduced context allocations in direct, DI, and nested validation hot paths.
-- Added FluentValidation benchmark baselines for sync, nested, and async validation.
+- Initial Crabalidator solution structure based on DynaBee.
+- Library, test, benchmark, sample, documentation, package, and CI scaffolding.
+- Stable NuGet package metadata, package icon, SourceLink, deterministic builds, symbols, and release workflow support.
+- Core validation model with validators, contexts, results, descriptors, diagnostics, and fluent rule configuration.
+- Public validation APIs through `CrabValidator<T>`, `IValidator<T>`, `IAsyncValidator<T>`, `ICrabalidator`, and `ValidationResult`.
+- Fluent `RuleFor(...)` rules for empty checks, length checks, comparisons, equality, and custom predicates.
+- Property-level `When(...)` and `Unless(...)` conditions.
+- Property cascade behavior through `Cascade(CascadeMode.Stop)`.
+- Nested object validation through `SetValidator(...)`.
+- Collection element validation through `RuleForEach(...)`.
+- Async custom validation through `MustAsync(...)` with cancellation support.
+- Async nested validator execution.
+- Backend-neutral validation planning with rule order, failure metadata, diagnostics, and interpreted execution.
+- DynaBee sync generation backend with generated validator types, generated method bodies, compiled invokers, and registry caching.
+- DynaBee-generated hot paths for direct sync validation, typed property getters, typed rule checks, typed `Must(...)` delegates, conditions, nested validation, and collection validation.
+- Dependency injection registration through `Microsoft.Extensions.DependencyInjection`.
+- Validator discovery, compiled validator adapters, and the default Crabalidator runtime service.
+- Runtime diagnostics for registered validators and readable validation plan output through `DescribePlan(...)`.
+- Basic console sample covering sync rules, conditions, nested validation, collection validation, async validation, and diagnostics.
+- BenchmarkDotNet scenarios for direct, interpreted, generated DI, nested, async, and delegate-heavy validation paths.
+- FluentValidation benchmark baselines for sync, nested, async, and delegate-heavy validation scenarios.
+
+### Optimized
+
+- Reduced context allocations in direct, DI, nested, and generated validation hot paths.
 - Inlined nested plan execution to avoid intermediate child `ValidationResult` allocations.
 - Avoided duplicate failure collection copies when plans produce invalid results.
+- Pre-sized validation failure collections from validation plan estimates.
+- Optimized generated invalid paths for common rule kinds and delegate predicates.
+
+### Notes
+
+- Crabalidator targets `net8.0`, `net9.0`, and `net10.0`.
+- DynaBee is an internal generation backend dependency and is not exposed through Crabalidator public APIs.
+- Validators that contain async rules must be executed with `ValidateAsync(...)`.
+- NativeAOT/mobile-friendly generation is not part of this release.

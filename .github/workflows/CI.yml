@@ -7,18 +7,24 @@ on:
     paths:
       - 'src/**'
       - 'tests/**'
+      - 'benchmarks/**'
+      - 'samples/**'
       - '.github/workflows/**'
       - '*.sln'
       - 'Directory.Build.props'
+      - 'Directory.Packages.props'
   push:
     branches:
       - main
     paths:
       - 'src/**'
       - 'tests/**'
+      - 'benchmarks/**'
+      - 'samples/**'
       - '.github/workflows/**'
       - '*.sln'
       - 'Directory.Build.props'
+      - 'Directory.Packages.props'
 
 jobs:
   build-and-test:
