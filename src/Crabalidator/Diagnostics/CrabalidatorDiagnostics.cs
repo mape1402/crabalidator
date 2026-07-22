@@ -1,5 +1,6 @@
 using System.Text;
 using Crabalidator.DependencyInjection;
+using Crabalidator.Planning;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Crabalidator.Diagnostics
@@ -37,6 +38,10 @@ namespace Crabalidator.Diagnostics
         }
 
         public string DescribePlan<T>()
-            => _services.GetRequiredService<CrabValidator<T>>().DescribePlan();
+        {
+            var validator = _services.GetRequiredService<CrabValidator<T>>();
+            var plan = new ValidationPlanBuilder(_services).Build(validator.Descriptor);
+            return plan.DescribePlan();
+        }
     }
 }

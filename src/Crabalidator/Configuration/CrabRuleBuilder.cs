@@ -124,13 +124,28 @@ namespace Crabalidator.Configuration
 
             _propertyRule.SetNestedValidator(new NestedValidatorDescriptor(
                 typeof(TChild),
+                validator.GetType(),
                 false,
-                validator.Plan.RequiresAsync,
-                validator.Plan,
-                value => value == null ? ValidationResult.Success : validator.Plan.Execute(value),
-                (value, cancellationToken) => value == null
-                    ? new ValueTask<ValidationResult>(ValidationResult.Success)
-                    : validator.Plan.ExecuteAsync(value, cancellationToken)));
+                validator));
+
+            return this;
+        }
+
+        public ICrabRuleBuilder<T, TProperty> SetValidator<TChildValidator>()
+            where TChildValidator : class
+        {
+            var modelType = GetValidatorModelType(typeof(TChildValidator));
+            if (!modelType.IsAssignableFrom(typeof(TProperty)))
+            {
+                throw new InvalidOperationException(
+                    $"Validator for '{modelType.FullName}' cannot validate property '{_propertyRule.PropertyPath}' of type '{typeof(TProperty).FullName}'.");
+            }
+
+            _propertyRule.SetNestedValidator(new NestedValidatorDescriptor(
+                modelType,
+                typeof(TChildValidator),
+                false,
+                null));
 
             return this;
         }
@@ -150,13 +165,23 @@ namespace Crabalidator.Configuration
 
             _propertyRule.SetNestedValidator(new NestedValidatorDescriptor(
                 typeof(TElement),
+                validator.GetType(),
                 true,
-                validator.Plan.RequiresAsync,
-                validator.Plan,
-                value => value == null ? ValidationResult.Success : validator.Plan.Execute(value),
-                (value, cancellationToken) => value == null
-                    ? new ValueTask<ValidationResult>(ValidationResult.Success)
-                    : validator.Plan.ExecuteAsync(value, cancellationToken)));
+                validator));
+
+            return this;
+        }
+
+        public ICrabRuleBuilder<T, TProperty> RuleForEach<TElementValidator>()
+            where TElementValidator : class
+        {
+            EnsureEnumerableProperty();
+
+            _propertyRule.SetNestedValidator(new NestedValidatorDescriptor(
+                GetValidatorModelType(typeof(TElementValidator)),
+                typeof(TElementValidator),
+                true,
+                null));
 
             return this;
         }
@@ -177,6 +202,31 @@ namespace Crabalidator.Configuration
 
             configure(_currentRule);
             return this;
+        }
+
+        private void EnsureEnumerableProperty()
+        {
+            if (!NestedValidatorDescriptor.IsEnumerableButNotString(typeof(TProperty)))
+            {
+                throw new InvalidOperationException(
+                    $"RuleForEach requires an enumerable property, but '{_propertyRule.PropertyPath}' is '{typeof(TProperty).FullName}'.");
+            }
+        }
+
+        private static Type GetValidatorModelType(Type validatorType)
+        {
+            var current = validatorType;
+            while (current != null && current != typeof(object))
+            {
+                if (current.IsGenericType && current.GetGenericTypeDefinition() == typeof(CrabValidator<>))
+                {
+                    return current.GetGenericArguments()[0];
+                }
+
+                current = current.BaseType;
+            }
+
+            throw new ArgumentException($"Type '{validatorType.FullName}' must derive from CrabValidator<T>.", nameof(validatorType));
         }
     }
 }

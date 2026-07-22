@@ -4,12 +4,12 @@ namespace Crabalidator.Samples.Basic
     {
         public OrderValidator()
         {
-            RuleFor(x => x.Customer)
-                .SetValidator(new CustomerValidator());
+            ValidateNested(x => x.Customer);
 
             RuleFor(x => x.Items)
-                .NotEmpty()
-                .RuleForEach(new OrderItemValidator());
+                .NotEmpty();
+
+            ValidateEach(x => x.Items);
         }
     }
 }

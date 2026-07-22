@@ -11,8 +11,6 @@ var provider = services.BuildServiceProvider();
 var crabalidator = provider.GetRequiredService<ICrabalidator>();
 var diagnostics = provider.GetRequiredService<ICrabalidatorDiagnostics>();
 var customerValidator = provider.GetRequiredService<CrabValidator<Customer>>();
-var orderValidator = provider.GetRequiredService<CrabValidator<Order>>();
-var registrationValidator = provider.GetRequiredService<CrabValidator<RegistrationRequest>>();
 
 Console.WriteLine("Crabalidator basic sample");
 Console.WriteLine();
@@ -76,7 +74,4 @@ SampleResultPrinter.Print("Invalid order", crabalidator.Validate(invalidOrder));
 SampleResultPrinter.Print("Invalid async registration", await crabalidator.ValidateAsync(invalidRegistration));
 
 Console.WriteLine();
-Console.WriteLine($"Customer planned properties: {customerValidator.Plan.Properties.Count}");
-Console.WriteLine($"Order planned properties: {orderValidator.Plan.Properties.Count}");
-Console.WriteLine($"Registration requires async: {registrationValidator.Plan.RequiresAsync}");
-Console.WriteLine($"Customer requires context: {customerValidator.Plan.RequiresContext}");
+Console.WriteLine($"Customer configured properties: {customerValidator.Descriptor.Rules.Count}");

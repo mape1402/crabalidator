@@ -4,12 +4,12 @@ namespace Crabalidator.Benchmarks
     {
         public BenchmarkOrderValidator()
         {
-            RuleFor(x => x.Customer)
-                .SetValidator(new BenchmarkCustomerValidator());
+            ValidateNested(x => x.Customer);
 
             RuleFor(x => x.Items)
-                .NotEmpty()
-                .RuleForEach(new BenchmarkOrderItemValidator());
+                .NotEmpty();
+
+            ValidateEach(x => x.Items);
         }
     }
 }

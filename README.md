@@ -163,16 +163,16 @@ RuleFor(x => x.Name)
 Validate child objects:
 
 ```csharp
-RuleFor(x => x.Address)
-    .SetValidator(new AddressValidator());
+ValidateNested(x => x.Address);
 ```
 
 Validate collection elements:
 
 ```csharp
 RuleFor(x => x.Items)
-    .NotEmpty()
-    .RuleForEach(new OrderItemValidator());
+    .NotEmpty();
+
+ValidateEach(x => x.Items);
 ```
 
 Nested failures are returned with prefixed paths such as `Address.PostalCode` or `Items[0].Sku`.
@@ -230,15 +230,3 @@ Run benchmarks:
 dotnet run --project benchmarks/Crabalidator.Benchmarks -c Release
 ```
 
-## Release
-
-Production releases are published from branches named `releases/vX.Y.Z`.
-
-The release workflow validates the changelog, builds, tests, packs NuGet packages, creates or updates the GitHub release tag, creates the GitHub release, and publishes to nuget.org through NuGet Trusted Publishing.
-
-The repository variable `NUGET_USER` must be set to the nuget.org username configured in the Trusted Publishing policy.
-
-## Documentation
-
-- [Architecture](docs/ARCHITECTURE.md)
-- [Roadmap](docs/ROADMAP.md)

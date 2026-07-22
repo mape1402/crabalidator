@@ -108,8 +108,20 @@ namespace Crabalidator
         ICrabRuleBuilder<T, TProperty> SetValidator<TChild>(CrabValidator<TChild> validator);
 
         /// <summary>
+        /// Applies a child validator resolved by type to the property value.
+        /// </summary>
+        ICrabRuleBuilder<T, TProperty> SetValidator<TChildValidator>()
+            where TChildValidator : class;
+
+        /// <summary>
         /// Applies a child validator to each item in the property collection.
         /// </summary>
         ICrabRuleBuilder<T, TProperty> RuleForEach<TElement>(CrabValidator<TElement> validator);
+
+        /// <summary>
+        /// Applies a child validator resolved by type to each item in the property collection.
+        /// </summary>
+        ICrabRuleBuilder<T, TProperty> RuleForEach<TElementValidator>()
+            where TElementValidator : class;
     }
 }

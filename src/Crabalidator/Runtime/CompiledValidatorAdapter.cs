@@ -1,4 +1,5 @@
 using Crabalidator.Planning;
+using Crabalidator.Generation;
 
 namespace Crabalidator.Runtime
 {
@@ -9,21 +10,26 @@ namespace Crabalidator.Runtime
     internal sealed class CompiledValidatorAdapter<T> : IValidator<T>, IAsyncValidator<T>
     {
         private readonly CrabValidator<T> _validator;
-        private readonly ICompiledValidatorRegistry _registry;
+        private readonly IServiceProvider _services;
+        private readonly IValidationGenerationBackend _generationBackend;
+        private readonly Lazy<ValidationPlan> _plan;
         private readonly Lazy<TypedCompiledValidator<T>> _compiledValidator;
 
         public CompiledValidatorAdapter(
             CrabValidator<T> validator,
-            ICompiledValidatorRegistry registry)
+            IServiceProvider services,
+            IValidationGenerationBackend generationBackend)
         {
             _validator = validator ?? throw new ArgumentNullException(nameof(validator));
-            _registry = registry ?? throw new ArgumentNullException(nameof(registry));
-            _compiledValidator = new Lazy<TypedCompiledValidator<T>>(() => TypedCompiledValidator<T>.Create(_registry.GetOrAdd(_validator)));
+            _services = services ?? throw new ArgumentNullException(nameof(services));
+            _generationBackend = generationBackend ?? throw new ArgumentNullException(nameof(generationBackend));
+            _plan = new Lazy<ValidationPlan>(() => new ValidationPlanBuilder(_services).Build(_validator.Descriptor));
+            _compiledValidator = new Lazy<TypedCompiledValidator<T>>(() => TypedCompiledValidator<T>.Create(_generationBackend.Compile(_plan.Value)));
         }
 
         public ValidationResult Validate(T instance)
         {
-            if (_validator.Plan.RequiresAsync)
+            if (_plan.Value.RequiresAsync)
             {
                 throw new InvalidOperationException("This validator contains async rules and must be executed with ValidateAsync.");
             }
@@ -38,7 +44,7 @@ namespace Crabalidator.Runtime
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (_validator.Plan.RequiresAsync)
+            if (_plan.Value.RequiresAsync)
             {
                 throw new InvalidOperationException("This validator contains async rules and must be executed with ValidateAsync.");
             }
@@ -48,9 +54,9 @@ namespace Crabalidator.Runtime
 
         public ValueTask<ValidationResult> ValidateAsync(T instance, CancellationToken cancellationToken = default)
         {
-            if (_validator.Plan.RequiresAsync)
+            if (_plan.Value.RequiresAsync)
             {
-                return ValidationPlanExecutor.ExecuteAsync(_validator.Plan, instance, cancellationToken);
+                return ValidationPlanExecutor.ExecuteAsync(_plan.Value, instance, cancellationToken);
             }
 
             return new ValueTask<ValidationResult>(Validate(instance));
@@ -63,9 +69,9 @@ namespace Crabalidator.Runtime
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (_validator.Plan.RequiresAsync)
+            if (_plan.Value.RequiresAsync)
             {
-                return ValidationPlanExecutor.ExecuteAsync(_validator.Plan, context, cancellationToken);
+                return ValidationPlanExecutor.ExecuteAsync(_plan.Value, context, cancellationToken);
             }
 
             return new ValueTask<ValidationResult>(Validate(context));

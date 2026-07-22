@@ -8,29 +8,27 @@ namespace Crabalidator.Configuration
     /// </summary>
     public sealed class NestedValidatorDescriptor
     {
-        private readonly Func<object, ValidationResult> _validate;
-        private readonly Func<object, CancellationToken, ValueTask<ValidationResult>> _validateAsync;
-
         internal NestedValidatorDescriptor(
             Type modelType,
+            Type validatorType,
             bool isCollection,
-            bool isAsync,
-            ValidationPlan plan,
-            Func<object, ValidationResult> validate,
-            Func<object, CancellationToken, ValueTask<ValidationResult>> validateAsync)
+            ICrabValidatorDescriptorSource validator)
         {
             ModelType = modelType ?? throw new ArgumentNullException(nameof(modelType));
+            ValidatorType = validatorType ?? throw new ArgumentNullException(nameof(validatorType));
             IsCollection = isCollection;
-            IsAsync = isAsync;
-            Plan = plan ?? throw new ArgumentNullException(nameof(plan));
-            _validate = validate ?? throw new ArgumentNullException(nameof(validate));
-            _validateAsync = validateAsync ?? throw new ArgumentNullException(nameof(validateAsync));
+            Validator = validator;
         }
 
         /// <summary>
         /// Gets the nested model type.
         /// </summary>
         public Type ModelType { get; }
+
+        /// <summary>
+        /// Gets the nested validator type.
+        /// </summary>
+        public Type ValidatorType { get; }
 
         /// <summary>
         /// Gets a value indicating whether this validator applies to collection items.
@@ -40,15 +38,7 @@ namespace Crabalidator.Configuration
         /// <summary>
         /// Gets a value indicating whether this nested validator requires async execution.
         /// </summary>
-        public bool IsAsync { get; }
-
-        internal ValidationPlan Plan { get; }
-
-        internal ValidationResult Validate(object instance)
-            => _validate(instance);
-
-        internal ValueTask<ValidationResult> ValidateAsync(object instance, CancellationToken cancellationToken)
-            => _validateAsync(instance, cancellationToken);
+        internal ICrabValidatorDescriptorSource Validator { get; }
 
         internal static bool IsEnumerableButNotString(Type type)
             => type != typeof(string) && typeof(IEnumerable).IsAssignableFrom(type);

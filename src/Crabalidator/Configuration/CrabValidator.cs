@@ -8,7 +8,7 @@ namespace Crabalidator
     /// Base class for configuring validators.
     /// </summary>
     /// <typeparam name="T">The model type.</typeparam>
-    public abstract class CrabValidator<T> : IValidator<T>, IAsyncValidator<T>
+    public abstract class CrabValidator<T> : IValidator<T>, IAsyncValidator<T>, ICrabValidatorDescriptorSource
     {
         private readonly ValidatorDescriptor _descriptor;
         private readonly Lazy<ValidationPlan> _plan;
@@ -74,6 +74,40 @@ namespace Crabalidator
             _descriptor.AddRule(propertyRule);
 
             return new CrabRuleBuilder<T, TProperty>(propertyRule);
+        }
+
+        /// <summary>
+        /// Captures nested validation for a child object property.
+        /// </summary>
+        /// <typeparam name="TProperty">The child model type.</typeparam>
+        /// <param name="expression">The child property expression.</param>
+        protected void ValidateNested<TProperty>(Expression<Func<T, TProperty>> expression)
+        {
+            var propertyRule = PropertyRuleDescriptor.Create(expression);
+            propertyRule.SetNestedValidator(new NestedValidatorDescriptor(
+                typeof(TProperty),
+                typeof(CrabValidator<TProperty>),
+                false,
+                null));
+
+            _descriptor.AddRule(propertyRule);
+        }
+
+        /// <summary>
+        /// Captures nested validation for each item in a collection property.
+        /// </summary>
+        /// <typeparam name="TElement">The collection item model type.</typeparam>
+        /// <param name="expression">The collection property expression.</param>
+        protected void ValidateEach<TElement>(Expression<Func<T, IEnumerable<TElement>>> expression)
+        {
+            var propertyRule = PropertyRuleDescriptor.Create(expression);
+            propertyRule.SetNestedValidator(new NestedValidatorDescriptor(
+                typeof(TElement),
+                typeof(CrabValidator<TElement>),
+                true,
+                null));
+
+            _descriptor.AddRule(propertyRule);
         }
     }
 }
