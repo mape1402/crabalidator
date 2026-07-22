@@ -104,6 +104,38 @@ namespace Crabalidator.Tests
             Assert.Contains("- #0 NotEmpty", description);
         }
 
+        [Fact]
+        public void Nested_Validator_Type_Is_Resolved_From_DependencyInjection()
+        {
+            var dependency = new DiValidationDependency("blocked");
+            var services = new ServiceCollection();
+            services.AddSingleton(dependency);
+            services.AddCrabalidator(registration =>
+            {
+                registration.AddValidator<DiOrderValidator>();
+                registration.AddValidator<DiAddressValidator>();
+                registration.AddValidator<DiOrderItemValidator>();
+            });
+
+            var provider = services.BuildServiceProvider();
+            var validator = provider.GetRequiredService<IValidator<DiOrder>>();
+
+            var result = validator.Validate(new DiOrder
+            {
+                Address = new DiAddress { City = "blocked" },
+                Items = new List<DiOrderItem>
+                {
+                    new DiOrderItem { Sku = "ok" },
+                    new DiOrderItem { Sku = "blocked" }
+                }
+            });
+
+            Assert.False(result.IsValid);
+            Assert.Contains(result.Errors, x => x.PropertyPath == "Address.City");
+            Assert.Contains(result.Errors, x => x.PropertyPath == "Items[1].Sku");
+            Assert.True(dependency.CallCount >= 2);
+        }
+
         public sealed class DiCustomerValidator : CrabValidator<DiCustomer>
         {
             public DiCustomerValidator()
@@ -118,6 +150,77 @@ namespace Crabalidator.Tests
             public string Name { get; set; }
 
             public int Age { get; set; }
+        }
+
+        public sealed class DiOrderValidator : CrabValidator<DiOrder>
+        {
+            public DiOrderValidator()
+            {
+                ValidateNested(x => x.Address);
+
+                ValidateEach(x => x.Items);
+            }
+        }
+
+        public sealed class DiAddressValidator : CrabValidator<DiAddress>
+        {
+            private readonly DiValidationDependency _dependency;
+
+            public DiAddressValidator(DiValidationDependency dependency)
+            {
+                _dependency = dependency;
+
+                RuleFor(x => x.City)
+                    .Must(_dependency.IsAllowed);
+            }
+        }
+
+        public sealed class DiOrderItemValidator : CrabValidator<DiOrderItem>
+        {
+            private readonly DiValidationDependency _dependency;
+
+            public DiOrderItemValidator(DiValidationDependency dependency)
+            {
+                _dependency = dependency;
+
+                RuleFor(x => x.Sku)
+                    .Must(_dependency.IsAllowed);
+            }
+        }
+
+        public sealed class DiValidationDependency
+        {
+            private readonly string _blockedValue;
+
+            public DiValidationDependency(string blockedValue)
+            {
+                _blockedValue = blockedValue;
+            }
+
+            public int CallCount { get; private set; }
+
+            public bool IsAllowed(string value)
+            {
+                CallCount++;
+                return value != _blockedValue;
+            }
+        }
+
+        public sealed class DiOrder
+        {
+            public DiAddress Address { get; set; }
+
+            public List<DiOrderItem> Items { get; set; }
+        }
+
+        public sealed class DiAddress
+        {
+            public string City { get; set; }
+        }
+
+        public sealed class DiOrderItem
+        {
+            public string Sku { get; set; }
         }
     }
 

@@ -18,8 +18,7 @@ namespace Crabalidator.Samples.Basic
                 .NotNull()
                 .MaximumLength(25);
 
-            RuleFor(x => x.Address)
-                .SetValidator(new AddressValidator());
+            ValidateNested(x => x.Address);
 
             RuleFor(x => x.Status)
                 .Must(x => x == "ACTIVE")

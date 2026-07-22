@@ -2,11 +2,27 @@ using Crabalidator.Configuration;
 
 namespace Crabalidator.Planning
 {
+    using Microsoft.Extensions.DependencyInjection;
+
     /// <summary>
     /// Builds validation plans from descriptors.
     /// </summary>
     public sealed class ValidationPlanBuilder : IValidationPlanBuilder
     {
+        private readonly IServiceProvider _services;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ValidationPlanBuilder"/> class.
+        /// </summary>
+        public ValidationPlanBuilder()
+        {
+        }
+
+        internal ValidationPlanBuilder(IServiceProvider services)
+        {
+            _services = services;
+        }
+
         /// <inheritdoc/>
         public ValidationPlan Build(ValidatorDescriptor descriptor)
         {
@@ -71,7 +87,7 @@ namespace Crabalidator.Planning
                     propertyRule.TypedCondition,
                     propertyRule.IsConditionNegated,
                     rules,
-                    CreateNestedValidationPlan(propertyRule),
+                    CreateNestedValidationPlan(descriptor, propertyRule),
                     propertyRule.GetValue,
                     propertyRule.ShouldValidate));
             }
@@ -83,7 +99,7 @@ namespace Crabalidator.Planning
                 diagnostics);
         }
 
-        private static NestedValidationPlan CreateNestedValidationPlan(PropertyRuleDescriptor propertyRule)
+        private NestedValidationPlan CreateNestedValidationPlan(ValidatorDescriptor descriptor, PropertyRuleDescriptor propertyRule)
         {
             var nested = propertyRule.NestedValidator;
             if (nested == null)
@@ -91,13 +107,80 @@ namespace Crabalidator.Planning
                 return null;
             }
 
+            var validator = ResolveNestedValidator(descriptor, nested);
+            var plan = Build(validator.Descriptor);
+
             return new NestedValidationPlan(
                 nested.ModelType,
                 nested.IsCollection,
-                nested.IsAsync,
-                nested.Plan,
-                nested.Validate,
-                nested.ValidateAsync);
+                plan.RequiresAsync,
+                plan,
+                value => value == null ? ValidationResult.Success : ValidationPlanExecutor.Execute(plan, value),
+                (value, cancellationToken) => value == null
+                    ? new ValueTask<ValidationResult>(ValidationResult.Success)
+                    : ValidationPlanExecutor.ExecuteAsync(plan, value, cancellationToken));
+        }
+
+        private ICrabValidatorDescriptorSource ResolveNestedValidator(ValidatorDescriptor descriptor, NestedValidatorDescriptor nested)
+        {
+            if (nested.Validator != null)
+            {
+                return nested.Validator;
+            }
+
+            var validator = _services?.GetService(nested.ValidatorType);
+            if (validator == null)
+            {
+                if (nested.ValidatorType.IsAbstract)
+                {
+                    validator = ResolveDefaultNestedValidator(descriptor, nested);
+                }
+                else
+                {
+                    validator = _services == null
+                        ? Activator.CreateInstance(nested.ValidatorType)
+                        : ActivatorUtilities.CreateInstance(_services, nested.ValidatorType);
+                }
+            }
+
+            if (validator is not ICrabValidatorDescriptorSource descriptorSource)
+            {
+                throw new InvalidOperationException($"Type '{nested.ValidatorType.FullName}' must derive from CrabValidator<T>.");
+            }
+
+            return descriptorSource;
+        }
+
+        private object ResolveDefaultNestedValidator(ValidatorDescriptor descriptor, NestedValidatorDescriptor nested)
+        {
+            var serviceType = nested.ValidatorType;
+            var validator = _services?.GetService(serviceType);
+            if (validator != null)
+            {
+                return validator;
+            }
+
+            var candidates = descriptor.ValidatorType.Assembly
+                .GetTypes()
+                .Where(x => x != null && !x.IsAbstract && !x.IsInterface && !x.ContainsGenericParameters)
+                .Where(serviceType.IsAssignableFrom)
+                .ToArray();
+
+            if (candidates.Length == 1)
+            {
+                return _services == null
+                    ? Activator.CreateInstance(candidates[0])
+                    : ActivatorUtilities.CreateInstance(_services, candidates[0]);
+            }
+
+            if (candidates.Length == 0)
+            {
+                throw new InvalidOperationException(
+                    $"No validator was found for nested model '{nested.ModelType.FullName}'. Register a CrabValidator<{nested.ModelType.Name}> with AddCrabalidator or use an explicit nested validator type or instance.");
+            }
+
+            throw new InvalidOperationException(
+                $"Multiple validators were found for nested model '{nested.ModelType.FullName}'. Use an explicit nested validator type or instance.");
         }
     }
 }

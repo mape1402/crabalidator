@@ -16,8 +16,7 @@ namespace Crabalidator.Benchmarks
                 .NotNull()
                 .MaximumLength(40);
 
-            RuleFor(x => x.Address)
-                .SetValidator(new BenchmarkAddressValidator());
+            ValidateNested(x => x.Address);
 
             RuleFor(x => x.Status)
                 .Must(x => x == "ACTIVE");

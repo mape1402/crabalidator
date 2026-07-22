@@ -40,7 +40,9 @@ namespace Crabalidator.Benchmarks
             services.AddCrabalidator(registration =>
             {
                 registration.AddValidator<BenchmarkCustomerValidator>();
+                registration.AddValidator<BenchmarkAddressValidator>();
                 registration.AddValidator<BenchmarkOrderValidator>();
+                registration.AddValidator<BenchmarkOrderItemValidator>();
                 registration.AddValidator<BenchmarkRegistrationRequestValidator>();
             });
 
