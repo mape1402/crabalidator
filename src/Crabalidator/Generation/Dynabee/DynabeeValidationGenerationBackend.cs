@@ -141,7 +141,7 @@ namespace Crabalidator.Generation.Dynabee
             var failures = body.DeclareLocal<List<ValidationFailure>>("failures");
             body.Assign(failures, body.Constant(null, typeof(List<ValidationFailure>)));
 
-            EmitProperties(body, planExpression, delegatesExpression, instance, instanceAsObject, failures, plan, delegates, null, null, "root");
+            EmitProperties(body, planExpression, delegatesExpression, instance, instanceAsObject, failures, plan, delegates, plan.EstimatedFailureCount, null, null, "root");
 
             body.Return(body.StaticCall(RuntimeToResultMethod, failures));
         }
@@ -155,6 +155,7 @@ namespace Crabalidator.Generation.Dynabee
             IBeeLocal failures,
             ValidationPlan plan,
             DelegateTable delegates,
+            int failureCapacity,
             string pathPrefix,
             IBeeValueExpression pathPrefixExpression,
             string localPrefix)
@@ -172,6 +173,7 @@ namespace Crabalidator.Generation.Dynabee
                     propertyIndex,
                     plan.ModelType,
                     delegates,
+                    failureCapacity,
                     pathPrefix,
                     pathPrefixExpression,
                     $"{localPrefix}_{propertyIndex}");
@@ -189,6 +191,7 @@ namespace Crabalidator.Generation.Dynabee
             int propertyIndex,
             Type modelType,
             DelegateTable delegates,
+            int failureCapacity,
             string pathPrefix,
             IBeeValueExpression pathPrefixExpression,
             string localPrefix)
@@ -211,6 +214,7 @@ namespace Crabalidator.Generation.Dynabee
                             propertyIndex,
                             modelType,
                             delegates,
+                            failureCapacity,
                             pathPrefix,
                             pathPrefixExpression,
                             localPrefix));
@@ -234,13 +238,14 @@ namespace Crabalidator.Generation.Dynabee
                         propertyIndex,
                         modelType,
                         delegates,
+                        failureCapacity,
                         pathPrefix,
                         pathPrefixExpression,
                         localPrefix));
                 return;
             }
 
-            EmitPropertyWithoutCondition(body, planExpression, delegatesExpression, instance, instanceAsObject, failures, property, propertyIndex, modelType, delegates, pathPrefix, pathPrefixExpression, localPrefix);
+            EmitPropertyWithoutCondition(body, planExpression, delegatesExpression, instance, instanceAsObject, failures, property, propertyIndex, modelType, delegates, failureCapacity, pathPrefix, pathPrefixExpression, localPrefix);
         }
 
         private static void EmitPropertyWithoutCondition(
@@ -254,6 +259,7 @@ namespace Crabalidator.Generation.Dynabee
             int propertyIndex,
             Type modelType,
             DelegateTable delegates,
+            int failureCapacity,
             string pathPrefix,
             IBeeValueExpression pathPrefixExpression,
             string localPrefix)
@@ -284,7 +290,7 @@ namespace Crabalidator.Generation.Dynabee
                 var rule = property.Rules[ruleIndex];
                 if (propertyFailed == null)
                 {
-                    EmitRule(body, planExpression, delegatesExpression, failures, attemptedValue, valueType, property, rule, propertyIndex, ruleIndex, propertyFailed, delegates, pathPrefix, pathPrefixExpression);
+                    EmitRule(body, planExpression, delegatesExpression, failures, attemptedValue, valueType, property, rule, propertyIndex, ruleIndex, propertyFailed, delegates, failureCapacity, pathPrefix, pathPrefixExpression);
                     continue;
                 }
 
@@ -303,13 +309,14 @@ namespace Crabalidator.Generation.Dynabee
                         ruleIndex,
                         propertyFailed,
                         delegates,
+                        failureCapacity,
                         pathPrefix,
                         pathPrefixExpression));
             }
 
             if (property.NestedValidation != null)
             {
-                EmitNestedValidation(body, planExpression, delegatesExpression, failures, attemptedValue, property, propertyIndex, pathPrefix, pathPrefixExpression, localPrefix, delegates);
+                EmitNestedValidation(body, planExpression, delegatesExpression, failures, attemptedValue, property, propertyIndex, pathPrefix, pathPrefixExpression, localPrefix, delegates, failureCapacity);
             }
         }
 
@@ -326,6 +333,7 @@ namespace Crabalidator.Generation.Dynabee
             int ruleIndex,
             IBeeLocal propertyFailed,
             DelegateTable delegates,
+            int failureCapacity,
             string pathPrefix,
             IBeeValueExpression pathPrefixExpression)
         {
@@ -341,7 +349,7 @@ namespace Crabalidator.Generation.Dynabee
                 invalid,
                 branch =>
                 {
-                    EmitAddFailure(branch, failures, attemptedValue, rule, pathPrefix, pathPrefixExpression);
+                    EmitAddFailure(branch, failures, attemptedValue, rule, failureCapacity, pathPrefix, pathPrefixExpression);
 
                     if (propertyFailed != null)
                     {
@@ -355,12 +363,13 @@ namespace Crabalidator.Generation.Dynabee
             IBeeLocal failures,
             IBeeValueExpression attemptedValue,
             RulePlan rule,
+            int failureCapacity,
             string pathPrefix,
             IBeeValueExpression pathPrefixExpression)
         {
             body.If(
                 body.IsNull(failures),
-                branch => branch.Assign(failures, branch.New<List<ValidationFailure>>()));
+                branch => branch.Assign(failures, branch.New(typeof(List<ValidationFailure>), branch.Constant(Math.Max(1, failureCapacity)))));
 
             var propertyPath = pathPrefixExpression == null
                 ? body.Constant(CombinePath(pathPrefix, rule.Failure.PropertyPath), typeof(string))
@@ -390,7 +399,8 @@ namespace Crabalidator.Generation.Dynabee
             string pathPrefix,
             IBeeValueExpression pathPrefixExpression,
             string localPrefix,
-            DelegateTable delegates)
+            DelegateTable delegates,
+            int failureCapacity)
         {
             if (pathPrefixExpression != null)
             {
@@ -408,7 +418,7 @@ namespace Crabalidator.Generation.Dynabee
 
             if (CanEmitInlineCollectionNested(property, attemptedValue.Type))
             {
-                EmitCollectionNestedValidation(body, planExpression, delegatesExpression, failures, attemptedValue, property, propertyIndex, pathPrefix, localPrefix, delegates);
+                EmitCollectionNestedValidation(body, planExpression, delegatesExpression, failures, attemptedValue, property, propertyIndex, pathPrefix, localPrefix, delegates, failureCapacity);
                 return;
             }
 
@@ -435,6 +445,7 @@ namespace Crabalidator.Generation.Dynabee
                             failures,
                             property.NestedValidation.Plan,
                             delegates,
+                            failureCapacity,
                             CombinePath(pathPrefix, property.PropertyPath),
                             null,
                             $"{localPrefix}_nested");
@@ -464,7 +475,8 @@ namespace Crabalidator.Generation.Dynabee
             int propertyIndex,
             string pathPrefix,
             string localPrefix,
-            DelegateTable delegates)
+            DelegateTable delegates,
+            int failureCapacity)
         {
             body.If(
                 body.Not(body.IsNull(attemptedValue)),
@@ -497,6 +509,7 @@ namespace Crabalidator.Generation.Dynabee
                             failures,
                             property.NestedValidation.Plan,
                             delegates,
+                            failureCapacity,
                             null,
                             itemPrefix,
                             $"{localPrefix}_item");

@@ -94,7 +94,7 @@ namespace Crabalidator.Planning
                         continue;
                     }
 
-                    failures ??= new List<ValidationFailure>();
+                    failures ??= new List<ValidationFailure>(plan.EstimatedFailureCount);
                     failures.Add(new ValidationFailure(
                         rule.Failure.PropertyName,
                         CombinePath(pathPrefix, rule.Failure.PropertyPath),
@@ -153,7 +153,7 @@ namespace Crabalidator.Planning
                         continue;
                     }
 
-                    failures ??= new List<ValidationFailure>();
+                    failures ??= new List<ValidationFailure>(plan.EstimatedFailureCount);
                     failures.Add(new ValidationFailure(
                         rule.Failure.PropertyName,
                         CombinePath(pathPrefix, rule.Failure.PropertyPath),

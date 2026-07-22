@@ -25,6 +25,7 @@ namespace Crabalidator.Planning
             RequiresAsync = Properties.SelectMany(x => x.Rules).Any(x => x.IsAsync)
                 || Properties.Any(x => x.NestedValidation?.IsAsync == true);
             RequiresContext = Properties.SelectMany(x => x.Rules).Any(x => x.RequiresContext);
+            EstimatedFailureCount = EstimateFailures(Properties);
         }
 
         /// <summary>
@@ -57,6 +58,8 @@ namespace Crabalidator.Planning
         /// </summary>
         public bool RequiresContext { get; }
 
+        internal int EstimatedFailureCount { get; }
+
         /// <summary>
         /// Executes this plan for an untyped model instance.
         /// </summary>
@@ -73,5 +76,24 @@ namespace Crabalidator.Planning
         /// <returns>The validation result.</returns>
         public ValueTask<ValidationResult> ExecuteAsync(object instance, CancellationToken cancellationToken = default)
             => ValidationPlanExecutor.ExecuteAsync(this, instance, cancellationToken);
+
+        private static int EstimateFailures(IReadOnlyList<PropertyValidationPlan> properties)
+        {
+            var count = 0;
+            for (var i = 0; i < properties.Count; i++)
+            {
+                var property = properties[i];
+                count += property.CascadeMode == CascadeMode.Stop && property.Rules.Count > 0
+                    ? 1
+                    : property.Rules.Count;
+
+                if (property.NestedValidation?.IsCollection == false)
+                {
+                    count += property.NestedValidation.Plan.EstimatedFailureCount;
+                }
+            }
+
+            return count;
+        }
     }
 }

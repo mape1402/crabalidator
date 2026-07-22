@@ -43,7 +43,7 @@ namespace Crabalidator.Generation.Dynabee
             string pathPrefix)
         {
             var rule = plan.Properties[propertyIndex].Rules[ruleIndex];
-            failures ??= new List<ValidationFailure>();
+            failures ??= new List<ValidationFailure>(Math.Max(1, plan.EstimatedFailureCount));
             failures.Add(new ValidationFailure(
                 rule.Failure.PropertyName,
                 CombinePath(pathPrefix, rule.Failure.PropertyPath),
