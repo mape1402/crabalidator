@@ -1,5 +1,19 @@
 # Changelog
 
+## [v1.0.1] - 2026-07-22
+
+### Added
+
+- Inferred nested object validation through `ValidateNested(...)`.
+- Inferred collection element validation through `ValidateEach(...)`.
+- Type-based nested validator overloads for explicit validator selection without manual construction.
+
+### Fixed
+
+- Resolved inferred nested validators from dependency injection so child validators can use constructor dependencies and registered lifetimes.
+- Built DI validator plans with the active service provider for compiled validators and diagnostics.
+- Avoided manual `new` validator construction in samples, README snippets, and benchmark nested validation setup.
+
 ## [v1.0.0] - 2026-07-21
 
 ### Added
