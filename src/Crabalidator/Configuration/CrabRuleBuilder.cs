@@ -7,7 +7,7 @@ namespace Crabalidator.Configuration
     /// </summary>
     /// <typeparam name="T">The model type.</typeparam>
     /// <typeparam name="TProperty">The property type.</typeparam>
-    internal sealed class CrabRuleBuilder<T, TProperty> : ICrabRuleBuilder<T, TProperty>
+    internal sealed class CrabRuleBuilder<T, TProperty> : ICrabRuleBuilder<T, TProperty>, IKnownRuleBuilder<T, TProperty>
     {
         private readonly PropertyRuleDescriptor _propertyRule;
         private RuleDescriptor _currentRule;
@@ -16,6 +16,10 @@ namespace Crabalidator.Configuration
         {
             _propertyRule = propertyRule ?? throw new ArgumentNullException(nameof(propertyRule));
         }
+
+        public string PropertyName => _propertyRule.PropertyName;
+
+        public Type PropertyType => typeof(TProperty);
 
         public ICrabRuleBuilder<T, TProperty> NotNull()
             => Add(RuleDescriptor.NotNull(_propertyRule.PropertyName));
@@ -192,6 +196,9 @@ namespace Crabalidator.Configuration
             _currentRule = rule;
             return this;
         }
+
+        public ICrabRuleBuilder<T, TProperty> AddKnownRule(RuleDescriptor rule)
+            => Add(rule);
 
         private ICrabRuleBuilder<T, TProperty> ConfigureCurrent(Func<RuleDescriptor, RuleDescriptor> configure)
         {
