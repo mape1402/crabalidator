@@ -1,5 +1,27 @@
 # Changelog
 
+## [v1.0.2] - 2026-08-06
+
+### Added
+
+- Built-in rule extension methods for strings, comparable values, collections, membership checks, defaults, and null/default checks in the base `Crabalidator` namespace.
+- BenchmarkDotNet coverage for built-in rule extensions against FluentValidation equivalents.
+- BenchmarkDotNet coverage for custom `Must(...)` predicates using public static, public instance, and fallback lambda delegates.
+- Explicit nested validator helpers through `ValidateNestedWith<TValidator>(...)` and `ValidateEachWith<TValidator>(...)`.
+
+### Optimized
+
+- Optimized DynaBee generated validators to emit direct calls for visible `Must(Func<TProperty, bool>)` delegate methods.
+- Added fast-path support for public static `Must` predicates and public instance predicates with captured targets.
+- Updated built-in extension rules that require predicate state to use visible predicate methods so generated validators can avoid `Delegate.Invoke`.
+- Improved mixed extension-rule validation performance against FluentValidation baselines.
+
+### Fixed
+
+- Preserved property types when explicit nested validator helpers receive object-typed property expressions.
+- Allowed explicit nested validator selection without manually constructing validators, keeping dependency injection intact.
+- Kept opaque lambdas and private predicate methods on the safe fallback path.
+
 ## [v1.0.1] - 2026-07-22
 
 ### Added

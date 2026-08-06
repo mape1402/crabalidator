@@ -11,7 +11,7 @@ Crabalidator is designed for applications that want FluentValidation-style valid
 ## What Crabalidator Does
 
 - Configures validators with `CrabValidator<T>` and `RuleFor(...)`.
-- Supports common sync rules such as `NotEmpty`, comparisons, equality, and custom `Must(...)` predicates.
+- Supports common sync rules such as `NotEmpty`, string rules, collection count rules, comparisons, equality, membership, and custom `Must(...)` predicates.
 - Supports property-level `When(...)` and `Unless(...)` conditions.
 - Supports `Cascade(CascadeMode.Stop)` for fail-fast property validation.
 - Supports inferred nested object validation through `ValidateNested(...)`.
@@ -22,6 +22,7 @@ Crabalidator is designed for applications that want FluentValidation-style valid
 - Provides `ICrabalidator`, typed `IValidator<T>`, and typed `IAsyncValidator<T>` runtime APIs.
 - Provides registered validator diagnostics and readable validation plan output through `DescribePlan(...)`.
 - Uses DynaBee-generated method bodies and invokers for optimized sync validation paths.
+- Optimizes custom `Must(...)` predicates by emitting direct DynaBee calls for visible delegate methods.
 - Includes BenchmarkDotNet coverage against FluentValidation baselines.
 
 ## Design Goals
@@ -57,7 +58,7 @@ This boundary keeps Crabalidator focused on validation behavior while allowing D
 Install Crabalidator from NuGet:
 
 ```bash
-dotnet add package Crabalidator --version 1.0.0
+dotnet add package Crabalidator --version 1.0.2
 ```
 
 For local development, reference the project directly or use the solution in this repository.
@@ -96,6 +97,54 @@ public sealed class Customer
     public string Email { get; set; }
 }
 ```
+
+## Built-In Rules
+
+Crabalidator exposes common validators as extension methods in the base `Crabalidator` namespace:
+
+```csharp
+RuleFor(x => x.Name)
+    .NotEmpty()
+    .MinimumLength(3)
+    .MaximumLength(80)
+    .StartsWith("CR")
+    .Contains("AB")
+    .Matches("^CRAB");
+
+RuleFor(x => x.Email)
+    .NotNull()
+    .EmailAddress();
+
+RuleFor(x => x.Age)
+    .NotEmpty()
+    .InclusiveBetween(18, 99);
+
+RuleFor(x => x.Items)
+    .NotEmpty()
+    .MinimumCount(1)
+    .MaximumCount(10);
+
+RuleFor(x => x.Status)
+    .In("ACTIVE", "PENDING")
+    .NotIn("BLOCKED");
+```
+
+## Custom Rules
+
+Use `Must(...)` for project-specific rules:
+
+```csharp
+RuleFor(x => x.Code)
+    .Must(OrderRules.HasValidCode);
+
+public static class OrderRules
+{
+    public static bool HasValidCode(string value)
+        => value != null && value.StartsWith("CR", StringComparison.Ordinal);
+}
+```
+
+When the predicate method is visible to generated code, Crabalidator emits a direct DynaBee call instead of going through `Delegate.Invoke`. Opaque lambdas and private methods still work and automatically fall back to delegate invocation.
 
 Validate directly:
 
