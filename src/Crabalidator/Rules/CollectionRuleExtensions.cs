@@ -26,8 +26,9 @@ namespace Crabalidator
             where TCollection : IEnumerable
         {
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
+            var predicate = new CollectionCountRulePredicate<TCollection>(0, 0);
             return builder
-                .Must(value => value == null || GetCount(value) == 0)
+                .Must(predicate.IsEmpty)
                 .WithMessage($"'{propertyName}' must be empty.");
         }
 
@@ -42,9 +43,10 @@ namespace Crabalidator
         {
             EnsureNonNegative(count, nameof(count));
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
+            var predicate = new CollectionCountRulePredicate<TCollection>(count, count);
 
             return builder
-                .Must(value => value == null || GetCount(value) == count)
+                .Must(predicate.HasCount)
                 .WithMessage($"'{propertyName}' must contain {count} item(s).");
         }
 
@@ -59,9 +61,10 @@ namespace Crabalidator
         {
             EnsureNonNegative(minimum, nameof(minimum));
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
+            var predicate = new CollectionCountRulePredicate<TCollection>(minimum, minimum);
 
             return builder
-                .Must(value => value == null || GetCount(value) >= minimum)
+                .Must(predicate.HasMinimumCount)
                 .WithMessage($"'{propertyName}' must contain at least {minimum} item(s).");
         }
 
@@ -76,9 +79,10 @@ namespace Crabalidator
         {
             EnsureNonNegative(maximum, nameof(maximum));
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
+            var predicate = new CollectionCountRulePredicate<TCollection>(maximum, maximum);
 
             return builder
-                .Must(value => value == null || GetCount(value) <= maximum)
+                .Must(predicate.HasMaximumCount)
                 .WithMessage($"'{propertyName}' must contain no more than {maximum} item(s).");
         }
 
@@ -94,18 +98,10 @@ namespace Crabalidator
         {
             EnsureRange(minimum, maximum);
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
+            var predicate = new CollectionCountRulePredicate<TCollection>(minimum, maximum);
 
             return builder
-                .Must(value =>
-                {
-                    if (value == null)
-                    {
-                        return true;
-                    }
-
-                    var count = GetCount(value);
-                    return count >= minimum && count <= maximum;
-                })
+                .Must(predicate.IsBetween)
                 .WithMessage($"'{propertyName}' must contain between {minimum} and {maximum} item(s).");
         }
 

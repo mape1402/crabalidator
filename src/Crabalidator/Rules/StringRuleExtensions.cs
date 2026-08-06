@@ -8,8 +8,6 @@ namespace Crabalidator
     /// </summary>
     public static class StringRuleExtensions
     {
-        private const string BasicEmailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
-
         /// <summary>
         /// Requires the string to be non-null and contain non-whitespace text.
         /// </summary>
@@ -79,8 +77,9 @@ namespace Crabalidator
             }
 
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
+            var predicate = new StringPatternRulePredicate(pattern);
             return builder
-                .Must(value => value == null || Regex.IsMatch(value, pattern))
+                .Must(predicate.IsMatch)
                 .WithMessage($"'{propertyName}' is not in the correct format.");
         }
 
@@ -98,8 +97,9 @@ namespace Crabalidator
             }
 
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
+            var predicate = new StringPatternRulePredicate(regex);
             return builder
-                .Must(value => value == null || regex.IsMatch(value))
+                .Must(predicate.IsMatch)
                 .WithMessage($"'{propertyName}' is not in the correct format.");
         }
 
@@ -112,7 +112,7 @@ namespace Crabalidator
         {
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
             return builder
-                .Must(value => value == null || Regex.IsMatch(value, BasicEmailPattern))
+                .Must(EmailAddressRulePredicate.IsValid)
                 .WithMessage($"'{propertyName}' must be a valid email address.");
         }
 
@@ -131,8 +131,9 @@ namespace Crabalidator
             }
 
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
+            var predicate = new StringValueRulePredicate(value, comparison);
             return builder
-                .Must(text => text == null || text.StartsWith(value, comparison))
+                .Must(predicate.StartsWith)
                 .WithMessage($"'{propertyName}' must start with '{value}'.");
         }
 
@@ -151,8 +152,9 @@ namespace Crabalidator
             }
 
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
+            var predicate = new StringValueRulePredicate(value, comparison);
             return builder
-                .Must(text => text == null || text.EndsWith(value, comparison))
+                .Must(predicate.EndsWith)
                 .WithMessage($"'{propertyName}' must end with '{value}'.");
         }
 
@@ -171,8 +173,9 @@ namespace Crabalidator
             }
 
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
+            var predicate = new StringValueRulePredicate(value, comparison);
             return builder
-                .Must(text => text == null || text.Contains(value, comparison))
+                .Must(predicate.Contains)
                 .WithMessage($"'{propertyName}' must contain '{value}'.");
         }
     }

@@ -24,7 +24,7 @@ namespace Crabalidator
         {
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
             return builder
-                .Must(value => value == null)
+                .Must(NullRulePredicate<TProperty>.IsNull)
                 .WithMessage($"'{propertyName}' must be null.");
         }
 
@@ -56,7 +56,7 @@ namespace Crabalidator
         {
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
             return builder
-                .Must(value => EqualityComparer<TProperty>.Default.Equals(value, default))
+                .Must(NullRulePredicate<TProperty>.IsDefault)
                 .WithMessage($"'{propertyName}' must be the default value.");
         }
 
@@ -68,7 +68,7 @@ namespace Crabalidator
         {
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
             return builder
-                .Must(value => !EqualityComparer<TProperty>.Default.Equals(value, default))
+                .Must(NullRulePredicate<TProperty>.IsNotDefault)
                 .WithMessage($"'{propertyName}' must not be the default value.");
         }
 
@@ -85,8 +85,9 @@ namespace Crabalidator
             }
 
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
+            var predicate = new MembershipRulePredicate<TProperty>(allowedValues);
             return builder
-                .Must(value => allowedValues.Contains(value))
+                .Must(predicate.Contains)
                 .WithMessage($"'{propertyName}' must be one of the allowed values.");
         }
 
@@ -103,8 +104,9 @@ namespace Crabalidator
             }
 
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
+            var predicate = new MembershipRulePredicate<TProperty>(disallowedValues);
             return builder
-                .Must(value => !disallowedValues.Contains(value))
+                .Must(predicate.DoesNotContain)
                 .WithMessage($"'{propertyName}' must not be one of the disallowed values.");
         }
     }

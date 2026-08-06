@@ -62,9 +62,10 @@ namespace Crabalidator
         {
             EnsureRange(minimum, maximum);
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
+            var predicate = new ComparableRangeRulePredicate<TProperty>(minimum, maximum);
 
             return builder
-                .Must(value => value != null && value.CompareTo(minimum) >= 0 && value.CompareTo(maximum) <= 0)
+                .Must(predicate.IsInclusive)
                 .WithMessage($"'{propertyName}' must be between '{minimum}' and '{maximum}'.");
         }
 
@@ -79,9 +80,10 @@ namespace Crabalidator
         {
             EnsureRange(minimum, maximum);
             var propertyName = RuleBuilderExtensionSupport.GetPropertyName(builder);
+            var predicate = new ComparableRangeRulePredicate<TProperty>(minimum, maximum);
 
             return builder
-                .Must(value => value != null && value.CompareTo(minimum) > 0 && value.CompareTo(maximum) < 0)
+                .Must(predicate.IsExclusive)
                 .WithMessage($"'{propertyName}' must be between '{minimum}' and '{maximum}' exclusive.");
         }
 

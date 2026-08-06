@@ -72,6 +72,36 @@ namespace Crabalidator.Configuration
                 instance => accessor((T)instance));
         }
 
+        internal static PropertyRuleDescriptor CreateUntyped<T>(Expression<Func<T, object>> expression)
+        {
+            if (expression == null)
+            {
+                throw new ArgumentNullException(nameof(expression));
+            }
+
+            var path = PropertyPathResolver.Resolve(expression);
+            var propertyType = ResolvePropertyType(expression);
+            var accessor = expression.Compile();
+
+            return new PropertyRuleDescriptor(
+                path.PropertyName,
+                path.PropertyPathValue,
+                propertyType,
+                instance => accessor((T)instance));
+        }
+
+        private static Type ResolvePropertyType(LambdaExpression expression)
+        {
+            var current = expression.Body;
+            while (current is UnaryExpression unary
+                && (unary.NodeType == ExpressionType.Convert || unary.NodeType == ExpressionType.ConvertChecked))
+            {
+                current = unary.Operand;
+            }
+
+            return current.Type;
+        }
+
         internal void AddRule(RuleDescriptor rule)
         {
             if (rule == null)

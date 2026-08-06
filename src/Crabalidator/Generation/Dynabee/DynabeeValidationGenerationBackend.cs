@@ -16,6 +16,7 @@ namespace Crabalidator.Generation.Dynabee
     {
         private const string PlanPropertyName = "Plan";
         private const string DelegatesPropertyName = "Delegates";
+        private const string MustTargetsPropertyName = "MustTargets";
         private const string ValidateMethodName = "Validate";
         private static readonly MethodInfo CreateTypedInvokerCoreMethod = typeof(DynabeeValidationGenerationBackend)
             .GetMethod(nameof(CreateTypedInvokerCore), BindingFlags.NonPublic | BindingFlags.Static);
@@ -77,12 +78,13 @@ namespace Crabalidator.Generation.Dynabee
                     .RegisterAsConcrete(false)
                     .Inject<ValidationPlan>(PlanPropertyName)
                     .Inject<Delegate[]>(DelegatesPropertyName)
+                    .Inject<object[]>(MustTargetsPropertyName)
                     .AddMethod(ValidateMethodName, typeof(ValidationResult), m => m
                         .WithParameter("instance", plan.ModelType)
                         .EmitsBody(body => EmitValidateBody(body, plan, delegates))))
                 .Build();
 
-            var validator = context.CreateInstance(className, plan, delegates.Items);
+            var validator = context.CreateInstance(className, plan, delegates.Items, delegates.MustTargets);
             var invoker = context.CreateArgumentListAdapter(
                 className,
                 validator,
@@ -125,6 +127,7 @@ namespace Crabalidator.Generation.Dynabee
         {
             var planExpression = body.Property(body.Self(), PlanPropertyName);
             var delegatesExpression = body.Property(body.Self(), DelegatesPropertyName);
+            var mustTargetsExpression = body.Property(body.Self(), MustTargetsPropertyName);
             var instance = body.Parameter("instance");
             var instanceAsObject = body.Convert(instance, typeof(object));
 
@@ -141,7 +144,7 @@ namespace Crabalidator.Generation.Dynabee
             var failures = body.DeclareLocal<List<ValidationFailure>>("failures");
             body.Assign(failures, body.Constant(null, typeof(List<ValidationFailure>)));
 
-            EmitProperties(body, planExpression, delegatesExpression, instance, instanceAsObject, failures, plan, delegates, plan.EstimatedFailureCount, null, null, "root");
+            EmitProperties(body, planExpression, delegatesExpression, mustTargetsExpression, instance, instanceAsObject, failures, plan, delegates, plan.EstimatedFailureCount, null, null, "root");
 
             body.Return(body.StaticCall(RuntimeToResultMethod, failures));
         }
@@ -150,6 +153,7 @@ namespace Crabalidator.Generation.Dynabee
             IBeeMethodBodyBuilder body,
             IBeeValueExpression planExpression,
             IBeeValueExpression delegatesExpression,
+            IBeeValueExpression mustTargetsExpression,
             IBeeValueExpression instance,
             IBeeValueExpression instanceAsObject,
             IBeeLocal failures,
@@ -166,6 +170,7 @@ namespace Crabalidator.Generation.Dynabee
                     body,
                     planExpression,
                     delegatesExpression,
+                    mustTargetsExpression,
                     instance,
                     instanceAsObject,
                     failures,
@@ -184,6 +189,7 @@ namespace Crabalidator.Generation.Dynabee
             IBeeMethodBodyBuilder body,
             IBeeValueExpression planExpression,
             IBeeValueExpression delegatesExpression,
+            IBeeValueExpression mustTargetsExpression,
             IBeeValueExpression instance,
             IBeeValueExpression instanceAsObject,
             IBeeLocal failures,
@@ -207,6 +213,7 @@ namespace Crabalidator.Generation.Dynabee
                             branch,
                             planExpression,
                             delegatesExpression,
+                            mustTargetsExpression,
                             instance,
                             instanceAsObject,
                             failures,
@@ -231,6 +238,7 @@ namespace Crabalidator.Generation.Dynabee
                         branch,
                         branch.Property(branch.Self(), PlanPropertyName),
                         branch.Property(branch.Self(), DelegatesPropertyName),
+                        branch.Property(branch.Self(), MustTargetsPropertyName),
                         instance,
                         instanceAsObject,
                         failures,
@@ -245,13 +253,14 @@ namespace Crabalidator.Generation.Dynabee
                 return;
             }
 
-            EmitPropertyWithoutCondition(body, planExpression, delegatesExpression, instance, instanceAsObject, failures, property, propertyIndex, modelType, delegates, failureCapacity, pathPrefix, pathPrefixExpression, localPrefix);
+            EmitPropertyWithoutCondition(body, planExpression, delegatesExpression, mustTargetsExpression, instance, instanceAsObject, failures, property, propertyIndex, modelType, delegates, failureCapacity, pathPrefix, pathPrefixExpression, localPrefix);
         }
 
         private static void EmitPropertyWithoutCondition(
             IBeeMethodBodyBuilder body,
             IBeeValueExpression planExpression,
             IBeeValueExpression delegatesExpression,
+            IBeeValueExpression mustTargetsExpression,
             IBeeValueExpression instance,
             IBeeValueExpression instanceAsObject,
             IBeeLocal failures,
@@ -290,7 +299,7 @@ namespace Crabalidator.Generation.Dynabee
                 var rule = property.Rules[ruleIndex];
                 if (propertyFailed == null)
                 {
-                    EmitRule(body, planExpression, delegatesExpression, failures, attemptedValue, valueType, property, rule, propertyIndex, ruleIndex, propertyFailed, delegates, failureCapacity, pathPrefix, pathPrefixExpression);
+                    EmitRule(body, planExpression, delegatesExpression, mustTargetsExpression, failures, attemptedValue, valueType, property, rule, propertyIndex, ruleIndex, propertyFailed, delegates, failureCapacity, pathPrefix, pathPrefixExpression);
                     continue;
                 }
 
@@ -300,6 +309,7 @@ namespace Crabalidator.Generation.Dynabee
                         branch,
                         branch.Property(branch.Self(), PlanPropertyName),
                         branch.Property(branch.Self(), DelegatesPropertyName),
+                        branch.Property(branch.Self(), MustTargetsPropertyName),
                         failures,
                         attemptedValue,
                         valueType,
@@ -316,7 +326,7 @@ namespace Crabalidator.Generation.Dynabee
 
             if (property.NestedValidation != null)
             {
-                EmitNestedValidation(body, planExpression, delegatesExpression, failures, attemptedValue, property, propertyIndex, pathPrefix, pathPrefixExpression, localPrefix, delegates, failureCapacity);
+                EmitNestedValidation(body, planExpression, delegatesExpression, mustTargetsExpression, failures, attemptedValue, property, propertyIndex, pathPrefix, pathPrefixExpression, localPrefix, delegates, failureCapacity);
             }
         }
 
@@ -324,6 +334,7 @@ namespace Crabalidator.Generation.Dynabee
             IBeeMethodBodyBuilder body,
             IBeeValueExpression planExpression,
             IBeeValueExpression delegatesExpression,
+            IBeeValueExpression mustTargetsExpression,
             IBeeLocal failures,
             IBeeValueExpression attemptedValue,
             Type attemptedValueType,
@@ -337,7 +348,7 @@ namespace Crabalidator.Generation.Dynabee
             string pathPrefix,
             IBeeValueExpression pathPrefixExpression)
         {
-            var invalid = TryEmitInvalidExpression(body, delegatesExpression, attemptedValue, attemptedValueType, rule, delegates);
+            var invalid = TryEmitInvalidExpression(body, delegatesExpression, mustTargetsExpression, attemptedValue, attemptedValueType, rule, delegates);
             invalid ??= body.StaticCall(
                 RuntimeIsRuleInvalidMethod,
                 planExpression,
@@ -392,6 +403,7 @@ namespace Crabalidator.Generation.Dynabee
             IBeeMethodBodyBuilder body,
             IBeeValueExpression planExpression,
             IBeeValueExpression delegatesExpression,
+            IBeeValueExpression mustTargetsExpression,
             IBeeLocal failures,
             IBeeValueExpression attemptedValue,
             PropertyValidationPlan property,
@@ -418,7 +430,7 @@ namespace Crabalidator.Generation.Dynabee
 
             if (CanEmitInlineCollectionNested(property, attemptedValue.Type))
             {
-                EmitCollectionNestedValidation(body, planExpression, delegatesExpression, failures, attemptedValue, property, propertyIndex, pathPrefix, localPrefix, delegates, failureCapacity);
+                EmitCollectionNestedValidation(body, planExpression, delegatesExpression, mustTargetsExpression, failures, attemptedValue, property, propertyIndex, pathPrefix, localPrefix, delegates, failureCapacity);
                 return;
             }
 
@@ -440,6 +452,7 @@ namespace Crabalidator.Generation.Dynabee
                             branch,
                             nestedPlan,
                             delegatesExpression,
+                            branch.Property(branch.Self(), MustTargetsPropertyName),
                             attemptedValue,
                             branch.Convert(attemptedValue, typeof(object)),
                             failures,
@@ -469,6 +482,7 @@ namespace Crabalidator.Generation.Dynabee
             IBeeMethodBodyBuilder body,
             IBeeValueExpression planExpression,
             IBeeValueExpression delegatesExpression,
+            IBeeValueExpression mustTargetsExpression,
             IBeeLocal failures,
             IBeeValueExpression attemptedValue,
             PropertyValidationPlan property,
@@ -504,6 +518,7 @@ namespace Crabalidator.Generation.Dynabee
                             loop,
                             nestedPlan,
                             delegatesExpression,
+                            mustTargetsExpression,
                             item,
                             loop.Convert(item, typeof(object)),
                             failures,
@@ -550,11 +565,18 @@ namespace Crabalidator.Generation.Dynabee
         private static IBeeValueExpression TryEmitTypedMustInvalid(
             IBeeMethodBodyBuilder body,
             IBeeValueExpression delegatesExpression,
+            IBeeValueExpression mustTargetsExpression,
             IBeeValueExpression value,
             Type valueType,
             RulePlan rule,
             DelegateTable delegates)
         {
+            var directCall = TryEmitDirectMustInvalid(body, mustTargetsExpression, value, valueType, rule, delegates);
+            if (directCall != null)
+            {
+                return directCall;
+            }
+
             if (!valueType.IsValueType || rule.Predicate == null || !valueType.IsVisible || !delegates.RuleIndexes.TryGetValue(rule, out var index))
             {
                 return null;
@@ -573,9 +595,46 @@ namespace Crabalidator.Generation.Dynabee
                 value));
         }
 
+        private static IBeeValueExpression TryEmitDirectMustInvalid(
+            IBeeMethodBodyBuilder body,
+            IBeeValueExpression mustTargetsExpression,
+            IBeeValueExpression value,
+            Type valueType,
+            RulePlan rule,
+            DelegateTable delegates)
+        {
+            if (rule.Predicate == null || valueType == typeof(object) || !valueType.IsVisible)
+            {
+                return null;
+            }
+
+            var method = rule.Predicate.Method;
+            if (!CanEmitDirectMustCall(method, valueType))
+            {
+                return null;
+            }
+
+            var argumentType = method.GetParameters()[0].ParameterType;
+            var argument = argumentType == valueType ? value : body.Convert(value, argumentType);
+
+            if (method.IsStatic)
+            {
+                return body.Not(body.StaticCall(method, argument));
+            }
+
+            if (!delegates.MustTargetIndexes.TryGetValue(rule, out var targetIndex))
+            {
+                return null;
+            }
+
+            var target = body.Convert(body.Index(mustTargetsExpression, body.Constant(targetIndex)), method.DeclaringType);
+            return body.Not(body.Call(target, method, argument));
+        }
+
         private static IBeeValueExpression TryEmitInvalidExpression(
             IBeeMethodBodyBuilder body,
             IBeeValueExpression delegatesExpression,
+            IBeeValueExpression mustTargetsExpression,
             IBeeValueExpression value,
             Type valueType,
             RulePlan rule,
@@ -588,7 +647,7 @@ namespace Crabalidator.Generation.Dynabee
 
             if (rule.Kind == RuleKind.Must)
             {
-                return TryEmitTypedMustInvalid(body, delegatesExpression, value, valueType, rule, delegates);
+                return TryEmitTypedMustInvalid(body, delegatesExpression, mustTargetsExpression, value, valueType, rule, delegates);
             }
 
             return rule.Kind switch
@@ -837,20 +896,45 @@ namespace Crabalidator.Generation.Dynabee
         private static bool CanBeNull(Type type)
             => !type.IsValueType || Nullable.GetUnderlyingType(type) != null;
 
+        private static bool CanEmitDirectMustCall(MethodInfo method, Type valueType)
+        {
+            if (method == null
+                || !method.IsPublic
+                || method.ContainsGenericParameters
+                || method.ReturnType != typeof(bool)
+                || method.DeclaringType?.IsVisible != true)
+            {
+                return false;
+            }
+
+            var parameters = method.GetParameters();
+            if (parameters.Length != 1)
+            {
+                return false;
+            }
+
+            var parameterType = parameters[0].ParameterType;
+            return parameterType == valueType || parameterType.IsAssignableFrom(valueType);
+        }
+
         private static DelegateTable BuildDelegateTable(ValidationPlan plan)
         {
             var items = new List<Delegate>();
+            var mustTargets = new List<object>();
             var conditions = new Dictionary<PropertyValidationPlan, int>();
             var rules = new Dictionary<RulePlan, int>();
-            AddPlanDelegates(plan, items, conditions, rules);
-            return new DelegateTable(items.ToArray(), conditions, rules);
+            var mustTargetIndexes = new Dictionary<RulePlan, int>();
+            AddPlanDelegates(plan, items, mustTargets, conditions, rules, mustTargetIndexes);
+            return new DelegateTable(items.ToArray(), mustTargets.ToArray(), conditions, rules, mustTargetIndexes);
         }
 
         private static void AddPlanDelegates(
             ValidationPlan plan,
             List<Delegate> items,
+            List<object> mustTargets,
             Dictionary<PropertyValidationPlan, int> conditions,
-            Dictionary<RulePlan, int> rules)
+            Dictionary<RulePlan, int> rules,
+            Dictionary<RulePlan, int> mustTargetIndexes)
         {
             for (var propertyIndex = 0; propertyIndex < plan.Properties.Count; propertyIndex++)
             {
@@ -868,12 +952,20 @@ namespace Crabalidator.Generation.Dynabee
                     {
                         rules[rule] = items.Count;
                         items.Add(rule.Predicate);
+
+                        if (!rule.Predicate.Method.IsStatic
+                            && rule.Predicate.Target != null
+                            && CanEmitDirectMustCall(rule.Predicate.Method, property.PropertyType))
+                        {
+                            mustTargetIndexes[rule] = mustTargets.Count;
+                            mustTargets.Add(rule.Predicate.Target);
+                        }
                     }
                 }
 
                 if (property.NestedValidation != null)
                 {
-                    AddPlanDelegates(property.NestedValidation.Plan, items, conditions, rules);
+                    AddPlanDelegates(property.NestedValidation.Plan, items, mustTargets, conditions, rules, mustTargetIndexes);
                 }
             }
         }
@@ -882,19 +974,27 @@ namespace Crabalidator.Generation.Dynabee
         {
             public DelegateTable(
                 Delegate[] items,
+                object[] mustTargets,
                 IReadOnlyDictionary<PropertyValidationPlan, int> conditionIndexes,
-                IReadOnlyDictionary<RulePlan, int> ruleIndexes)
+                IReadOnlyDictionary<RulePlan, int> ruleIndexes,
+                IReadOnlyDictionary<RulePlan, int> mustTargetIndexes)
             {
                 Items = items;
+                MustTargets = mustTargets;
                 ConditionIndexes = conditionIndexes;
                 RuleIndexes = ruleIndexes;
+                MustTargetIndexes = mustTargetIndexes;
             }
 
             public Delegate[] Items { get; }
 
+            public object[] MustTargets { get; }
+
             public IReadOnlyDictionary<PropertyValidationPlan, int> ConditionIndexes { get; }
 
             public IReadOnlyDictionary<RulePlan, int> RuleIndexes { get; }
+
+            public IReadOnlyDictionary<RulePlan, int> MustTargetIndexes { get; }
         }
 
         private static string BuildClassName(ValidationPlan plan)
