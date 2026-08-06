@@ -94,6 +94,31 @@ namespace Crabalidator
         }
 
         /// <summary>
+        /// Captures nested validation for a child object property using an explicit validator type.
+        /// </summary>
+        /// <typeparam name="TValidator">The validator type.</typeparam>
+        /// <param name="expression">The child property expression.</param>
+        protected void ValidateNestedWith<TValidator>(Expression<Func<T, object>> expression)
+            where TValidator : class
+        {
+            var modelType = GetValidatorModelType(typeof(TValidator));
+            var propertyRule = PropertyRuleDescriptor.CreateUntyped(expression);
+            if (!modelType.IsAssignableFrom(propertyRule.PropertyType))
+            {
+                throw new InvalidOperationException(
+                    $"Validator for '{modelType.FullName}' cannot validate property '{propertyRule.PropertyPath}' of type '{propertyRule.PropertyType.FullName}'.");
+            }
+
+            propertyRule.SetNestedValidator(new NestedValidatorDescriptor(
+                modelType,
+                typeof(TValidator),
+                false,
+                null));
+
+            _descriptor.AddRule(propertyRule);
+        }
+
+        /// <summary>
         /// Captures nested validation for each item in a collection property.
         /// </summary>
         /// <typeparam name="TElement">The collection item model type.</typeparam>
@@ -108,6 +133,69 @@ namespace Crabalidator
                 null));
 
             _descriptor.AddRule(propertyRule);
+        }
+
+        /// <summary>
+        /// Captures nested validation for each item in a collection property using an explicit validator type.
+        /// </summary>
+        /// <typeparam name="TValidator">The validator type.</typeparam>
+        /// <param name="expression">The collection property expression.</param>
+        protected void ValidateEachWith<TValidator>(Expression<Func<T, object>> expression)
+            where TValidator : class
+        {
+            var modelType = GetValidatorModelType(typeof(TValidator));
+            var propertyRule = PropertyRuleDescriptor.CreateUntyped(expression);
+            if (!CanEnumerateModelType(propertyRule.PropertyType, modelType))
+            {
+                throw new InvalidOperationException(
+                    $"Validator for '{modelType.FullName}' cannot validate items from property '{propertyRule.PropertyPath}' of type '{propertyRule.PropertyType.FullName}'.");
+            }
+
+            propertyRule.SetNestedValidator(new NestedValidatorDescriptor(
+                modelType,
+                typeof(TValidator),
+                true,
+                null));
+
+            _descriptor.AddRule(propertyRule);
+        }
+
+        private static bool CanEnumerateModelType(Type propertyType, Type modelType)
+        {
+            if (propertyType == typeof(string) || !typeof(System.Collections.IEnumerable).IsAssignableFrom(propertyType))
+            {
+                return false;
+            }
+
+            if (propertyType.IsArray)
+            {
+                return modelType.IsAssignableFrom(propertyType.GetElementType());
+            }
+
+            var elementTypes = propertyType
+                .GetInterfaces()
+                .Concat(new[] { propertyType })
+                .Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                .Select(x => x.GetGenericArguments()[0])
+                .ToArray();
+
+            return elementTypes.Length == 0 || elementTypes.Any(modelType.IsAssignableFrom);
+        }
+
+        private static Type GetValidatorModelType(Type validatorType)
+        {
+            var current = validatorType;
+            while (current != null && current != typeof(object))
+            {
+                if (current.IsGenericType && current.GetGenericTypeDefinition() == typeof(CrabValidator<>))
+                {
+                    return current.GetGenericArguments()[0];
+                }
+
+                current = current.BaseType;
+            }
+
+            throw new ArgumentException($"Type '{validatorType.FullName}' must derive from CrabValidator<T>.", nameof(validatorType));
         }
     }
 }

@@ -14,8 +14,8 @@ Crabalidator is designed for applications that want FluentValidation-style valid
 - Supports common sync rules such as `NotEmpty`, comparisons, equality, and custom `Must(...)` predicates.
 - Supports property-level `When(...)` and `Unless(...)` conditions.
 - Supports `Cascade(CascadeMode.Stop)` for fail-fast property validation.
-- Supports nested object validation through `SetValidator(...)`.
-- Supports collection element validation through `RuleForEach(...)`.
+- Supports inferred nested object validation through `ValidateNested(...)`.
+- Supports inferred collection element validation through `ValidateEach(...)`.
 - Supports async custom rules through `MustAsync(...)`.
 - Supports async nested validators and cancellation.
 - Integrates with `Microsoft.Extensions.DependencyInjection`.
@@ -176,6 +176,13 @@ ValidateEach(x => x.Items);
 ```
 
 Nested failures are returned with prefixed paths such as `Address.PostalCode` or `Items[0].Sku`.
+
+When more than one validator exists for a nested model, choose the validator explicitly:
+
+```csharp
+ValidateNestedWith<ShippingAddressValidator>(x => x.Address);
+ValidateEachWith<StrictOrderItemValidator>(x => x.Items);
+```
 
 ## Async Validation
 
