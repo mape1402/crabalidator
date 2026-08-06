@@ -286,3 +286,21 @@ Run benchmarks:
 dotnet run --project benchmarks/Crabalidator.Benchmarks -c Release
 ```
 
+## Benchmark Snapshot
+
+These numbers come from BenchmarkDotNet on Windows 11, .NET 8.0, Release mode, using the short benchmark job in this repository. Treat them as a local comparison point rather than a universal guarantee.
+
+### Built-In Extension Rules
+
+| Scenario | Crabalidator | FluentValidation | Speedup | Crabalidator Alloc | FluentValidation Alloc |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Valid model | 265.4 ns | 643.4 ns | 2.4x | 48 B | 672 B |
+| Invalid model | 471.0 ns | 9,427.9 ns | 20.0x | 1,160 B | 20,584 B |
+
+### Custom `Must(...)` Predicate
+
+| Scenario | Crabalidator | FluentValidation | Speedup | Crabalidator Alloc | FluentValidation Alloc |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Public static predicate, valid model | 9.3 ns | 134.4 ns | 14.4x | 0 B | 600 B |
+| Public static predicate, invalid model | 22.9 ns | 679.7 ns | 29.7x | 152 B | 1,856 B |
+
