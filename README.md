@@ -253,6 +253,75 @@ static async ValueTask<bool> IsUsernameAvailableAsync(
 
 Validators that contain async rules must be executed with `ValidateAsync(...)`.
 
+## Testing
+
+Install the testing helpers from NuGet:
+
+```bash
+dotnet add package Crabalidator.Testing
+```
+
+Register validators in a lightweight test service collection:
+
+```csharp
+using Crabalidator.Testing;
+using Microsoft.Extensions.DependencyInjection;
+
+var services = new ServiceCollection();
+
+services.AddCrabalidatorTesting(typeof(CustomerValidator).Assembly);
+
+var provider = services.BuildServiceProvider();
+var validator = provider.GetRequiredService<IAsyncValidator<Customer>>();
+
+var result = await validator.ValidateAsync(customer);
+```
+
+External test hosts can use the adapter-friendly registration:
+
+```csharp
+services.AddCrabalidatorTestingAdapter(typeof(CustomerValidator).Assembly);
+```
+
+Run a specific validator directly without building a service provider:
+
+```csharp
+var result = await CrabalidatorTest
+    .For<CustomerValidator>()
+    .ValidateAsync(customer);
+```
+
+Assert validation results:
+
+```csharp
+result.ShouldBeValid();
+
+result.ShouldHaveErrorFor<Customer>(x => x.Email);
+result.ShouldHaveErrorMessage("Email is required.");
+result.ShouldHaveErrorCode("customer.email.required");
+```
+
+Property assertions can be scoped to a single property and chained:
+
+```csharp
+result
+    .ShouldHaveErrorFor<Customer>(x => x.Email)
+    .WithErrorCount(2)
+    .WithMessage("Email is required.")
+    .WithErrorCode("customer.email.required")
+    .WithSeverity(ValidationSeverity.Error);
+```
+
+Results returned by `CrabalidatorTest.For<TValidator>()` are typed, so direct validator tests can use the shorter property assertion:
+
+```csharp
+var result = await CrabalidatorTest
+    .For<CustomerValidator>()
+    .ValidateAsync(customer);
+
+result.ShouldHaveErrorFor(x => x.Email);
+```
+
 ## Diagnostics
 
 Crabalidator can describe registered validators and generated validation plans:
