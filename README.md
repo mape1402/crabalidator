@@ -58,7 +58,7 @@ This boundary keeps Crabalidator focused on validation behavior while allowing D
 Install Crabalidator from NuGet:
 
 ```bash
-dotnet add package Crabalidator --version 1.0.2
+dotnet add package Crabalidator --version 1.0.3
 ```
 
 For local development, reference the project directly or use the solution in this repository.
@@ -258,7 +258,7 @@ Validators that contain async rules must be executed with `ValidateAsync(...)`.
 Install the testing helpers from NuGet:
 
 ```bash
-dotnet add package Crabalidator.Testing
+dotnet add package Crabalidator.Testing --version 1.0.3
 ```
 
 Register validators in a lightweight test service collection:
