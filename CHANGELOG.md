@@ -1,5 +1,14 @@
 # Changelog
 
+## [v1.0.3] - 2026-08-07
+
+### Added
+
+- Added `Crabalidator.Testing` package for lightweight validator tests without a full application host.
+- Added `AddCrabalidatorTesting(...)` and `AddCrabalidatorTestingAdapter(...)` registration helpers.
+- Added direct validator test runner through `CrabalidatorTest.For<TValidator>()`.
+- Added validation result assertions for valid results, property failures, error messages, error codes, severity, and multiple property errors.
+
 ## [v1.0.2] - 2026-08-06
 
 ### Added
