@@ -1,5 +1,14 @@
 # Changelog
 
+## [v1.0.4] - 2026-08-11
+
+### Added
+
+- Added direct `TestValidate(...)` and `TestValidateAsync(...)` helpers for strongly typed validator tests.
+- Added `CrabalidatorTestHost` and builder APIs for DI-backed request validation in tests.
+- Added assembly discovery helpers for lightweight test hosts that validate requests without a full application host.
+- Documented direct request validator tests and lightweight test host usage for handlers and automations.
+
 ## [v1.0.3] - 2026-08-07
 
 ### Added

@@ -291,6 +291,28 @@ var result = await CrabalidatorTest
     .ValidateAsync(customer);
 ```
 
+For unit tests that already construct the validator, use `TestValidate(...)` directly:
+
+```csharp
+var result = new CreateHeroRequestValidator()
+    .TestValidate(new CreateHeroRequest("", "", "", 101, CId.Empty));
+
+result.ShouldHaveErrorFor(request => request.Alias);
+result.ShouldHaveErrorFor(request => request.PowerLevel);
+result.ShouldHaveErrorFor(request => request.TeamId);
+```
+
+For request validation through dependency injection, use the lightweight test host:
+
+```csharp
+await using var host = await CrabalidatorTestHost
+    .Create()
+    .UseValidatorsFromAssembly(typeof(Constants).Assembly)
+    .BuildAsync();
+
+var result = await host.ValidateAsync(request);
+```
+
 Assert validation results:
 
 ```csharp
