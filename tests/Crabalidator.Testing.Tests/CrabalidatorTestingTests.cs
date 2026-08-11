@@ -56,6 +56,19 @@ namespace Crabalidator.Testing.Tests
         }
 
         [Fact]
+        public void TestValidate_Validates_Direct_Validators_With_Typed_Assertions()
+        {
+            var result = new CreateHeroRequestValidator()
+                .TestValidate(new CreateHeroRequest("", 101, CId.Empty));
+
+            result.ShouldHaveErrorFor(request => request.Alias);
+            result.ShouldHaveErrorFor(request => request.PowerLevel)
+                .WithErrorCode("hero.powerLevel.range");
+            result.ShouldHaveErrorFor(request => request.TeamId)
+                .WithMessage("Team is required.");
+        }
+
+        [Fact]
         public async Task CrabalidatorTest_For_Supports_Async_Rules()
         {
             var result = await CrabalidatorTest
@@ -65,6 +78,45 @@ namespace Crabalidator.Testing.Tests
             result.ShouldHaveErrorFor(x => x.Status)
                 .WithMessage("Status must be ACTIVE.")
                 .WithErrorCode("customer.status.active");
+        }
+
+        [Fact]
+        public async Task TestValidateAsync_Validates_Direct_Async_Validators()
+        {
+            var result = await new AsyncCustomerRequestValidator()
+                .TestValidateAsync(new AsyncCustomerRequest { Status = "PENDING" });
+
+            result.ShouldHaveErrorFor(request => request.Status)
+                .WithErrorCode("customer.status.active");
+        }
+
+        [Fact]
+        public async Task CrabalidatorTestHost_Resolves_Validators_From_Di()
+        {
+            await using var host = await CrabalidatorTestHost
+                .Create()
+                .UseValidatorsFromAssembly(typeof(CreateCustomerRequestValidator).Assembly)
+                .BuildAsync();
+
+            var result = await host.ValidateAsync(new CreateCustomerRequest());
+
+            result.ShouldHaveErrorFor(request => request.Email)
+                .WithErrorCode("customer.email.required");
+        }
+
+        [Fact]
+        public void CrabalidatorTestHost_Supports_Sync_Validation()
+        {
+            using var host = CrabalidatorTestHost
+                .Create()
+                .UseValidatorsFromAssembly(typeof(CreateHeroRequestValidator).Assembly)
+                .Build();
+
+            var result = host.Validate(new CreateHeroRequest("", 101, CId.Empty));
+
+            result.ShouldHaveErrorFor(request => request.Alias);
+            result.ShouldHaveErrorFor(request => request.PowerLevel);
+            result.ShouldHaveErrorFor(request => request.TeamId);
         }
 
         [Fact]
@@ -139,5 +191,33 @@ namespace Crabalidator.Testing.Tests
     public sealed class CreateOrderRequest
     {
         public CreateCustomerRequest Customer { get; set; }
+    }
+
+    public readonly record struct CId(string Value)
+    {
+        public static CId Empty => new CId(string.Empty);
+    }
+
+    public sealed record CreateHeroRequest(string Alias, int PowerLevel, CId TeamId);
+
+    public sealed class CreateHeroRequestValidator : CrabValidator<CreateHeroRequest>
+    {
+        public CreateHeroRequestValidator()
+        {
+            RuleFor(x => x.Alias)
+                .NotEmpty()
+                .WithMessage("Alias is required.")
+                .WithErrorCode("hero.alias.required");
+
+            RuleFor(x => x.PowerLevel)
+                .InclusiveBetween(1, 100)
+                .WithMessage("Power level must be between 1 and 100.")
+                .WithErrorCode("hero.powerLevel.range");
+
+            RuleFor(x => x.TeamId)
+                .Must(value => !string.IsNullOrWhiteSpace(value.Value))
+                .WithMessage("Team is required.")
+                .WithErrorCode("hero.team.required");
+        }
     }
 }
